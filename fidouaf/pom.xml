@@ -76,7 +76,7 @@
 			<artifactId>jose4j</artifactId>
 			<version>0.6.4</version>
 		 </dependency>
-  		<dependency>
+  		<!--<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
 			<version>1.8</version>
@@ -85,7 +85,7 @@
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-json</artifactId>
 			<version>1.8</version>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>org.ebayopensource</groupId>
 			<artifactId>fido-uaf-core</artifactId>

@@ -88,6 +88,7 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
         uafMsg = (TextView) findViewById(R.id.textViewOpMsg);
         operation.setText(extras.getString("UAFIntentType"));
         uafMsg.setText(extras.getString("message"));
+        proceed(null);
     }
 
     private void processOpAndFinish() {

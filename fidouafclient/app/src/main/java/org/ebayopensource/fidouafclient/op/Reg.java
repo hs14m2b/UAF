@@ -17,6 +17,7 @@
 package org.ebayopensource.fidouafclient.op;
 
 import org.ebayopensource.fido.uaf.crypto.Base64url;
+import org.ebayopensource.fido.uaf.msg.asm.obj.OIDCTokens;
 import org.ebayopensource.fidouafclient.curl.Curl;
 import org.ebayopensource.fidouafclient.util.Endpoints;
 import org.ebayopensource.fidouafclient.util.Preferences;
@@ -31,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +45,18 @@ public class Reg {
 	public String getUafMsgRegRequest (String username, String facetId, Context context){
 		String serverResponse = getRegRequest(username);
 		return OpUtils.getUafRequest(serverResponse,facetId,context,false);
+	}
+
+	public String getUafMsgRegRequest (OIDCTokens tokens, String facetId, Context context){
+		String serverResponse = getRegRequest(tokens);
+		return OpUtils.getUafRequest(serverResponse,facetId,context,false);
+	}
+
+	public String getRegRequest (OIDCTokens tokens){
+		String url = Endpoints.getRegRequestEndpoint();
+		String header = "Authorization:" + tokens.access_token;
+		Log.d("Reg: ", "Making CURL GET with url: " + url + " and header: " + header);
+		return Curl.getInSeparateThread(url, header);
 	}
 
 	public String getRegRequest (String username){
@@ -81,6 +95,7 @@ public class Reg {
 		String json = getRegResponseForSending(regOut);
 		res.append("{regResponse}"+json);
 		String headerStr = "Content-Type:Application/json Accept:Application/json";
+		//add in authorization header here
 		res.append("{ServerResponse}");
 		String serverResponse = Curl.postInSeparateThread(Endpoints.getRegResponseEndpoint(), headerStr , json);
 		res.append(serverResponse);

@@ -30,6 +30,7 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.amazonaws.util.IOUtils;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import java.util.Base64;
@@ -68,10 +69,13 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 		String token_cookie = "";
         logger.log("Created response json object for population");
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        //BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String strEvent = IOUtils.toString(inputStream);
+		logger.log("Successfully read inputStream into String");
+		logger.log(strEvent);
         JSONObject event = null;
         try {
-            event = (JSONObject)parser.parse(reader);
+            event = (JSONObject)parser.parse(strEvent);
 			logger.log("Successfully parsed the input stream to a JSONObject");
 			logger.log(event.toJSONString());
             
@@ -144,6 +148,7 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 		}
 		else if (pathParameters.startsWith("regResponse"))
 		{
+			//client - need to send username with resopnse
 			String post_body = event.get("body").toString();
 			RegistrationRecord[] rr_response = processRegResponse(post_body);
 			json_body = gson.toJson(rr_response);

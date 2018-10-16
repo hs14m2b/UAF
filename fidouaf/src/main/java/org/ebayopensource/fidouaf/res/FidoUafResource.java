@@ -25,16 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.codec.binary.Base64;
 import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
@@ -65,60 +55,37 @@ import org.ebayopensource.fidouaf.stats.Info;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-@Path("/v1")
 public class FidoUafResource {
 
 	protected Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
-	@GET
-	@Path("/info")
-	@Produces(MediaType.APPLICATION_JSON)
 	public String info() {
 		return gson.toJson(new Info());
 	}
 	
-	@GET
-	@Path("/whitelistuuid/{uuid}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String whitelistuuad(@PathParam("uuid") String uuid) {
+	public String whitelistuuad(String uuid) {
 		Dash.getInstance().uuids.add(uuid);
 		return gson.toJson(Dash.getInstance().getInstance().uuids);
 	}
 	
-	@GET
-	@Path("/whitelistfacetid/{facetId}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String whitelistfacetid(@PathParam("facetId") String facetId) {
+	public String whitelistfacetid(String facetId) {
 		Dash.getInstance().facetIds.add(facetId);
 		return gson.toJson(Dash.getInstance().facetIds);
 	}
 
-	@GET
-	@Path("/stats")
-	@Produces(MediaType.APPLICATION_JSON)
 	public String getStats() {
 		return gson.toJson(Dash.getInstance().stats);
 	}
 
-	@GET
-	@Path("/history")
-	@Produces(MediaType.APPLICATION_JSON)
 	public List<Object> getHistory() {
 		return Dash.getInstance().history;
 	}
 
-	@GET
-	@Path("/registrations")
-	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, RegistrationRecord> getDbDump() {
 		return StorageImpl.getInstance().dbDump();
 	}
 
-	@GET
-	@Path("/public/regRequest/{username}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public RegistrationRequest[] getRegisReqPublic(
-			@PathParam("username") String username) {
+	public RegistrationRequest[] getRegisReqPublic(String username) {
 		System.out.println("Received /public/regRequest/{username} GET");
 		System.out.println("Received getRegisReqPublic GET for " + username);
 		return regReqPublic(username);
@@ -133,19 +100,13 @@ public class FidoUafResource {
 		return regReq;
 	}
 	
-	@GET
-	@Path("/public/regRequest/{username}/{appId}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getRegReqForAppId(@PathParam("username") String username, 
-			@PathParam("appId") String appId) {
+	public String getRegReqForAppId(String username, 
+			String appId) {
 		RegistrationRequest[] regReq = getRegisReqPublic(username);
 		setAppId(appId, regReq[0].header);
 		return gson.toJson(regReq);
 	}
 
-	@GET
-	@Path("/public/regRequest")
-	@Produces(MediaType.APPLICATION_JSON)
 	public RegistrationRequest[] postRegisReqPublic(String username) {
 		System.out.println("Received postRegisReqPublic GET for " + username);
 		return regReqPublic(username);
@@ -186,9 +147,6 @@ public class FidoUafResource {
 	 *
 	 * @return List of trusted Application Facet ID.
 	 */
-	@GET
-	@Path("/public/uaf/facets")
-	@Produces("application/fido.trusted-apps+json")
 	public Facets facets() {
 		String timestamp = new Date().toString();
 		Dash.getInstance().stats.put(Dash.LAST_REG_REQ, timestamp);
@@ -237,7 +195,6 @@ public class FidoUafResource {
 	 * i.e. list of FacetIDs related to this AppID.
 	 * @return a URL pointing to the TrustedFacets
 	 */
-	@Context UriInfo uriInfo;
 	private String getAppId() {
 		// You can get it dynamically.
 		// It only works if your server is not behind a reverse proxy
@@ -247,10 +204,6 @@ public class FidoUafResource {
 		return "https://api.mr-b.click/fido/fidouaf/v1/public/uaf/facets";
 	}
 
-	@POST
-	@Path("/public/regResponse")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public RegistrationRecord[] processRegResponse(String payload) {
 		System.out.println("Received processRegResponse POST");
 		System.out.println(payload);
@@ -285,28 +238,18 @@ public class FidoUafResource {
 		return result;
 	}
 
-	@POST
-	@Path("/public/deregRequest")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public String deregRequestPublic(String payload) {
 		System.out.println("Received deregRequestPublic POST");
 		System.out.println(payload);
 		return new DeregRequestProcessor().process(payload);
 	}
 
-	@GET
-	@Path("/public/authRequest")
-	@Produces(MediaType.APPLICATION_JSON)
 	public String getAuthReq() {
 		System.out.println("Received authResponse GET");
 		return gson.toJson(getAuthReqObj());
 	}
 
-	@GET
-	@Path("/public/authRequest/{appId}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getAuthForAppIdReq(@PathParam("appId") String appId) {
+	public String getAuthForAppIdReq(String appId) {
 		AuthenticationRequest[] authReqObj = getAuthReqObj();
 		setAppId(appId, authReqObj[0].header);
 		
@@ -333,11 +276,8 @@ public class FidoUafResource {
 		}
 	}
 
-	@GET
-	@Path("/public/authRequest/{appId}/{trxContent}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getAuthTrxReq(@PathParam("appId") String appId,
-			@PathParam("trxContent") String trxContent) {
+	public String getAuthTrxReq(String appId,
+			String trxContent) {
 		AuthenticationRequest[] authReqObj = getAuthReqObj();
 		setAppId(appId, authReqObj[0].header);
 		setTransaction(trxContent, authReqObj);
@@ -349,7 +289,7 @@ public class FidoUafResource {
 		authReqObj[0].transaction = new Transaction[1];
 		Transaction t = new Transaction();
 		t.content = trxContent;
-		t.contentType = MediaType.TEXT_PLAIN;
+		t.contentType = "txt/plain"; // MediaType.TEXT_PLAIN;
 		authReqObj[0].transaction[0] = t;
 	}
 
@@ -362,10 +302,6 @@ public class FidoUafResource {
 		return ret;
 	}
 
-	@POST
-	@Path("/public/authResponse")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public AuthenticatorRecord[] processAuthResponse(String payload) {
 		if (!payload.isEmpty()) {
 			System.out.println("Received authResponse POST");
@@ -417,10 +353,6 @@ public class FidoUafResource {
 		return sb.toString();
 	}
 
-	@POST
-	@Path("/public/uafRegRequest")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public ReturnUAFRegistrationRequest GetUAFRegistrationRequest(String payload) {
 		RegistrationRequest[] result = getRegisReqPublic("iafuser01");
 		ReturnUAFRegistrationRequest uafReq = null;
@@ -434,10 +366,6 @@ public class FidoUafResource {
 		return uafReq;
 	}
 
-	@POST
-	@Path("/public/uafAuthRequest")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public ReturnUAFAuthenticationRequest GetUAFAuthenticationRequest(
 			String payload) {
 		AuthenticationRequest[] result = getAuthReqObj();
@@ -452,10 +380,6 @@ public class FidoUafResource {
 		return uafReq;
 	}
 
-	@POST
-	@Path("/public/uafDeregRequest")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public ReturnUAFDeregistrationRequest GetUAFDeregistrationRequest(
 			String payload) {
 		String result = deregRequestPublic(payload);
@@ -478,10 +402,6 @@ public class FidoUafResource {
 		return uafReq;
 	}
 
-	@POST
-	@Path("/public/uafAuthResponse")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public ServerResponse UAFAuthResponse(String payload) {
 		ServerResponse servResp = new ServerResponse();
 		if (!payload.isEmpty()) {
@@ -517,10 +437,6 @@ public class FidoUafResource {
 		return servResp;
 	}
 
-	@POST
-	@Path("/public/uafRegResponse")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public ServerResponse UAFRegResponse(String payload) {
 		ServerResponse servResp = new ServerResponse();
 		if (!payload.isEmpty()) {
@@ -554,10 +470,6 @@ public class FidoUafResource {
 		return servResp;
 	}
 
-	@POST
-	@Path("/public/uafRequest")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public String GetUAFRequest(String payload) {
 		String uafReq = null;
 		if (!payload.isEmpty()) {
@@ -610,10 +522,6 @@ public class FidoUafResource {
 		return uafReq;
 	}
 
-	@POST
-	@Path("/public/uafResponse")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public ServerResponse UAFResponse(String payload) {
 		ServerResponse servResp = new ServerResponse();
 		if (!payload.isEmpty()) {

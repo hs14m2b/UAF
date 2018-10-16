@@ -26,6 +26,7 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.amazonaws.util.IOUtils;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import java.util.Base64;
@@ -54,10 +55,13 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
         //LambdaLogger logger = context.getLogger(); //basic cloudwatch logger
         logger.log("Loading Java Lambda handler");
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        //BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String strEvent = IOUtils.toString(inputStream);
+		logger.log("Successfully read inputStream into String");
+		logger.log(strEvent);
         JSONArray event = null;
         try {
-            event = (JSONArray)parser.parse(reader);
+            event = (JSONArray)parser.parse(strEvent);
 			logger.log("Successfully parsed the input stream to a JSONObject");
 			logger.log(event.toJSONString());
 			AuthenticatorRecord[] ar_response = processAuthResponse(event.toJSONString());
@@ -69,7 +73,7 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
 	        //check if keep-alive event
             JSONObject event2 = null;
             try {
-				event2 = (JSONObject)parser.parse(reader);
+				event2 = (JSONObject)parser.parse(strEvent);
 		        if (event2.containsKey("source") && 
 		        		event2.containsKey("detail-type") && 
 		        		event2.get("source").toString().equals("aws.events") && 

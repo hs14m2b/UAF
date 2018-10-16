@@ -17,11 +17,13 @@
 package org.ebayopensource.fidouafclient;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
@@ -36,6 +38,7 @@ import com.google.gson.Gson;
 
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fido.uaf.msg.client.UAFIntentType;
+import org.ebayopensource.fido.uaf.msg.asm.obj.OIDCTokens;
 import org.ebayopensource.fidouafclient.curl.Curl;
 import org.ebayopensource.fidouafclient.op.Auth;
 import org.ebayopensource.fidouafclient.op.Dereg;
@@ -43,6 +46,8 @@ import org.ebayopensource.fidouafclient.op.OpUtils;
 import org.ebayopensource.fidouafclient.op.Reg;
 import org.ebayopensource.fidouafclient.util.Endpoints;
 import org.ebayopensource.fidouafclient.util.Preferences;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.security.MessageDigest;
@@ -75,11 +80,15 @@ public class MainActivity extends Activity {
     private Dereg dereg = new Dereg();
     private Auth auth = new Auth();
     private int authenticatorIndex = 1;
+    private OIDCTokens tokens = null;
 
+    //push notification manager
+    private notificationTokenManager notifier = new notificationTokenManager();
+    private boolean processingNotification=false;
+    private String authenticationSession ="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (Preferences.getSettingsParam("keyID").equals("")) {
             setContentView(R.layout.activity_main);
             findFields();
@@ -88,8 +97,55 @@ public class MainActivity extends Activity {
             findFields();
             username.setText(Preferences.getSettingsParam("username"));
         }
+        Intent intent = getIntent();
+        Log.i("onCreate: ", "Got Intent");
+        // check if this intent is started via custom scheme link
+        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            if (intent.getExtras().containsKey(notificationListenerService.AUTHENTICATION_EXTRA))
+            {
+                Log.d(TAG, "Started using push notification");
+                authenticationSession = intent.getStringExtra(notificationListenerService.AUTHENTICATION_EXTRA);
+                Log.d(TAG, "Authentication Session is " + authenticationSession);
+                processNotification(authenticationSession);
+            }
+            else {
+                Log.d(TAG, "Started using URI");
+                Uri uri = intent.getData();
+                processUri(uri);
+            }
+        }
     }
 
+    private void processUri(Uri uri)
+    {
+        Log.i("processUri: ", "Launch URL is " + uri.toString());
+        // may be some test here with your custom uri
+        String authCode = uri.getQueryParameter("code"); // "str" is set
+        String authState = uri.getQueryParameter("state"); // "string" is set
+        Log.i("processUri: ", "Authorization code is " + authCode);
+        Log.i("processUri: ", "State is " + authState);
+        msg.setText("State is " + authState);//get the tokens
+        String postData = "grant_type=authorization_code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
+        String postHeader = "Content-type:application/x-www-form-urlencoded";
+        String responseTokens = Curl.postInSeparateThread("https://api.mr-b.click/oauth2/token", postHeader, postData);
+        Log.i("processUri: ", "Tokens are " + responseTokens);
+        tokens = gson.fromJson(responseTokens, OIDCTokens.class);
+        Log.i("processUri: ", "Cast responseTokens into object ");
+        Log.i("processUri: ", "Access Token is " + tokens.access_token);
+        msg.setText(msg.getText() + "\nIdentity Token is " + tokens.id_token);
+        if (authState.equals("startRegistration"))
+        {
+            //kick off the registration process
+            msg.setText(msg.getText() + "\nStarting Registration Process");
+            regRequest();
+        }
+    }
+
+    private void processNotification(String authenticationSession)
+    {
+        processingNotification = true;
+        authRequest(null);
+    }
     @Override
     public void onStart() {
         super.onStart();
@@ -139,10 +195,31 @@ public class MainActivity extends Activity {
     }
 
     public void regRequest(View view) {
+        regRequest();
+    }
+    public void regRequest(){
 //        String username = Preferences.getSettingsParam("username");
         String username = ((EditText) findViewById(R.id.editTextName)).getText().toString();
-        if (username.equals ("")) {
+        if (username.equals ("") && tokens == null) {
             msg.setText("Username cannot be empty.");
+
+            msg.setText("Retrieving tokens to initiate FIDO registration.");
+
+            String urlString = "https://api.mr-b.click/oauth2/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=startRegistration&scope=openid+profile+email+phone&redirect_uri=mrbapp://android.mr-b.click/authResponse";
+            Log.d(TAG, "URL to launch is: " + urlString);
+            Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(urlString));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setPackage("com.android.chrome");
+            try {
+                startActivity(intent);
+            } catch (ActivityNotFoundException ex) {
+                // Chrome browser presumably not installed so allow user to choose instead
+                intent.setPackage(null);
+                startActivity(intent);
+            }
+
+
+
             return;
         }
         Preferences.setSettingsParam("username", username);
@@ -164,7 +241,29 @@ public class MainActivity extends Activity {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        String regRequest = reg.getUafMsgRegRequest(username, facetID, this);
+        String regRequest;
+        if (tokens != null)
+        {
+            regRequest = reg.getUafMsgRegRequest(tokens, facetID, this);
+            Log.d(TAG, "Got UAF Message from server response " + regRequest);
+            try {
+                JSONObject json = new JSONObject(regRequest);
+                String serverResponseArray = json.get("uafProtocolMessage").toString();
+                Log.d(TAG, "Server array response (string) is " + serverResponseArray);
+                RegistrationRequest rr_response = gson.fromJson(serverResponseArray, RegistrationRequest[].class)[0];
+                username = rr_response.username;
+                Log.d(TAG, "Have set username to " + username);
+                ((EditText) findViewById(R.id.editTextName)).setText(username);
+                Preferences.setSettingsParam("username", username);
+            }
+            catch (Exception ex) {
+                Log.e(TAG, "Caught error processing server response to get username " + ex.getMessage());
+            }
+        }
+        else {
+            regRequest = reg.getUafMsgRegRequest(username, facetID, this);
+        }
+        //parse reg request and set username
         Log.d(TAG, "UAF reg request: " + regRequest);
         title.setText("{regRequest}" + regRequest);
 
@@ -306,11 +405,14 @@ public class MainActivity extends Activity {
                     //post to server
                     //	            String res = reg.sendRegResponse(asmResponse);
                     String res = reg.clientSendRegResponse(uafMessage);
+                    Log.d(TAG, "UAF message response: " + res);
                     setContentView(R.layout.activity_registered);
                     findFields();
                     title.setText("extras=" + extras.toString());
                     msg.setText(res);
                     username.setText(Preferences.getSettingsParam("username"));
+                    //get the notification token and send to server
+                    String registerResponse = Curl.putInSeparateThread("https://api.mr-b.click/oauth2/clientnotificationkeys/" + Preferences.getSettingsParam("username"), "", notificationTokenManager.notificationToken);
                 } catch (Exception e){
                     msg.setText("Registration operation failed.\n"+e);
                 }
@@ -320,6 +422,7 @@ public class MainActivity extends Activity {
             }
         } else if (requestCode == DEREG_ACTIVITY_RES_4) {
             if (resultCode == RESULT_OK) {
+                String deregisterResponse = Curl.deleteInSeparateThread("https://api.mr-b.click/oauth2/clientnotificationkeys/" + Preferences.getSettingsParam("username"));
                 Preferences.setSettingsParam("keyID", "");
                 Preferences.setSettingsParam("username", "");
                 setContentView(R.layout.activity_main);
@@ -344,6 +447,7 @@ public class MainActivity extends Activity {
                 userCancelled();
             }
         } else if (requestCode == AUTH_ACTIVITY_RES_5) {
+            // Got authentication response message from UAF activity
             if (resultCode == RESULT_OK) {
                 String uafMessage = data.getStringExtra("message");
                 Log.d(TAG, "UAF message: " + uafMessage);
@@ -352,8 +456,64 @@ public class MainActivity extends Activity {
                     //Prepare ReqResponse
                     //post to server
 //	            String res = auth.sendAuthResponse(asmResponse);
-                    String res = auth.clientSendResponse(uafMessage);
-                    msg.setText("\n" + res);
+                    if (processingNotification)
+                    {
+                        try {
+                            processingNotification = false;
+                            JSONObject json = new JSONObject(uafMessage);
+                            String AuthResponse = json.get("uafProtocolMessage").toString();
+                            Log.d(TAG, "AuthResponse message is: " + AuthResponse);
+                            msg.setText("\nAuthResponse is\n" + AuthResponse);
+                            String AuthResponseB64 = Base64.encodeToString(AuthResponse.getBytes(), Base64.NO_WRAP);
+                            Log.d(TAG, "Base64 encoded AuthResponse message is: " + AuthResponseB64);
+                            Log.d(TAG, "Authentication Session is " + authenticationSession);
+                            String registerResponse = Curl.postInSeparateThread("https://api.mr-b.click/oauth2/fidoauthresponse/" + authenticationSession, "", AuthResponseB64);
+                        }
+                        catch (Exception ex) {
+                            Log.d(TAG, "Failed to process notification");
+                        }
+                        Log.d(TAG, "Notification processing finished - closing activity");
+                        this.finish();
+
+                    }
+                    else {
+                        //NEW CODE - invoke OIDC URL
+                        try {
+                            JSONObject json = new JSONObject(uafMessage);
+                            String AuthResponse = json.get("uafProtocolMessage").toString();
+                            Log.d(TAG, "AuthResponse message is: " + AuthResponse);
+                            msg.setText("\nAuthResponse is\n" + AuthResponse);
+                            String AuthResponseB64 = Base64.encodeToString(AuthResponse.getBytes(), Base64.NO_WRAP);
+                            Log.d(TAG, "Base64 encoded AuthResponse message is: " + AuthResponseB64);
+                            String redirect_uri = "mrbapp://android.mr-b.click/authResponse";
+                            String urlString = "https://api.mr-b.click/oauth2/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=authenticated&scope=openid+profile+email+phone&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
+                            Log.d(TAG, "URL to launch is: " + urlString);
+                            //section to launch OIDC via device browser
+                        /*
+                        Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(urlString));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.setPackage("com.android.chrome");
+                        try {
+                            startActivity(intent);
+                        } catch (ActivityNotFoundException ex) {
+                            // Chrome browser presumably not installed so allow user to choose instead
+                            intent.setPackage(null);
+                            startActivity(intent);
+                        }
+                        */
+                            //section to launch OIDC via direct calls
+                            String targetUrl = Curl.getInSeparateThread(urlString, "", redirect_uri);
+                            Log.d(TAG, "targetUrl is: " + targetUrl);
+                            Uri uri = Uri.parse(targetUrl);
+                            processUri(uri);
+                        } catch (Exception ex) {
+                            //OLD Code - invoke FIDO Server directly to validate auth response
+                            String res = auth.clientSendResponse(uafMessage);
+                            msg.setText("\n" + res);
+                            Log.d(TAG, "UAF message response: " + res);
+                        }
+                    }
+
                 }
             }
             if (resultCode == RESULT_CANCELED) {

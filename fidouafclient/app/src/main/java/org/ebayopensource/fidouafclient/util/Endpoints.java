@@ -3,7 +3,7 @@ package org.ebayopensource.fidouafclient.util;
 public class Endpoints {
 
 	public static final String SERVER =
-	"http://openidconnect.ebay.com";
+	"https://api.mr-b.click/fido";
 	//"http://www.head2toes.org";
 	public static final String GET_AUTH_REQUEST = "/fidouaf/v1/public/authRequest";
 	public static final String POST_AUTH_RESPONSE = "/fidouaf/v1/public/authResponse";
