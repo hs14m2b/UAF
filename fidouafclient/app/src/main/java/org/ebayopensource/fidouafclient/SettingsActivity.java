@@ -40,6 +40,7 @@ public class SettingsActivity extends Activity {
 	private EditText authResEndpoint;
 	private EditText dereqEndpoint;
 	private EditText serverEndpoint;
+	private EditText oidcServerEndpoint;
 	private TextView msgs;
 
     @Override
@@ -53,6 +54,7 @@ public class SettingsActivity extends Activity {
         authReqEndpoint = (EditText) findViewById(R.id.authRequestEndpoint);
         dereqEndpoint = (EditText) findViewById(R.id.deregEndpoint);
         serverEndpoint = (EditText) findViewById(R.id.server);
+		oidcServerEndpoint = (EditText) findViewById(R.id.oidcServer);
         username = (EditText) findViewById(R.id.username);
         msgs = (TextView) findViewById(R.id.settingsMsgs);
         populate();
@@ -66,6 +68,7 @@ public class SettingsActivity extends Activity {
 		this.regReqEndpoint.setText(Endpoints.getRegRequestPath());
 		this.regResEndpoint.setText(Endpoints.getRegResponsePath());
 		this.dereqEndpoint.setText(Endpoints.getDeregPath());
+		this.oidcServerEndpoint.setText(Endpoints.getOidcServer());
 	}
 
 	public void back(View view) {
@@ -85,7 +88,8 @@ public class SettingsActivity extends Activity {
 				this.authResEndpoint.getText().toString(),
 				this.regReqEndpoint.getText().toString(),
 				this.regResEndpoint.getText().toString(),
-				this.dereqEndpoint.getText().toString()
+				this.dereqEndpoint.getText().toString(),
+				this.oidcServerEndpoint.getText().toString()
 				);
 		msgs.setText("Saved.");
 	}   

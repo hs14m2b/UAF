@@ -2,6 +2,8 @@ package org.ebayopensource.fidouafclient.util;
 
 public class Endpoints {
 
+	public static final String OIDCSERVER =
+			"https://api.mr-b.click/oauth2";
 	public static final String SERVER =
 	"https://api.mr-b.click/fido";
 	//"http://www.head2toes.org";
@@ -25,6 +27,13 @@ public class Endpoints {
 		return Preferences.getSettingsParam("serverEndpoint");
 	}
 
+	public static String getOidcServer() {
+		String oidcServerEndpoint = Preferences.getSettingsParam("oidcServerEndpoint");
+		if (oidcServerEndpoint!=null && oidcServerEndpoint.length() == 0){
+			Preferences.setSettingsParam("oidcServerEndpoint", OIDCSERVER);
+		}
+		return Preferences.getSettingsParam("oidcServerEndpoint");
+	}
 
 	public static String getAuthResponseEndpoint() {
 		check();
@@ -86,6 +95,7 @@ public class Endpoints {
 	}
 
 	public static void setDefaults (){
+		Preferences.setSettingsParam("oidcServerEndpoint", OIDCSERVER);
 		Preferences.setSettingsParam("serverEndpoint", SERVER);
 		Preferences.setSettingsParam("authReg", GET_AUTH_REQUEST);
 		Preferences.setSettingsParam("authRes", POST_AUTH_RESPONSE);
@@ -96,12 +106,13 @@ public class Endpoints {
 
 
 	public static void save(String server, String authReq, String authRes,
-			String regReq, String regRes, String dereg) {
+			String regReq, String regRes, String dereg, String oidcServer) {
 		Preferences.setSettingsParam("serverEndpoint", server);
 		Preferences.setSettingsParam("authReg", authReq);
 		Preferences.setSettingsParam("authRes", authRes);
 		Preferences.setSettingsParam("regReg", regReq);
 		Preferences.setSettingsParam("regRes", regRes);
 		Preferences.setSettingsParam("dereg", dereg);
+		Preferences.setSettingsParam("oidcServerEndpoint", oidcServer);
 	}
 }

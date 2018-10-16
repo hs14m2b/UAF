@@ -127,7 +127,7 @@ public class MainActivity extends Activity {
         msg.setText("State is " + authState);//get the tokens
         String postData = "grant_type=authorization_code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
         String postHeader = "Content-type:application/x-www-form-urlencoded";
-        String responseTokens = Curl.postInSeparateThread("https://api.mr-b.click/oauth2/token", postHeader, postData);
+        String responseTokens = Curl.postInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/token", postHeader, postData);
         Log.i("processUri: ", "Tokens are " + responseTokens);
         tokens = gson.fromJson(responseTokens, OIDCTokens.class);
         Log.i("processUri: ", "Cast responseTokens into object ");
@@ -205,7 +205,7 @@ public class MainActivity extends Activity {
 
             msg.setText("Retrieving tokens to initiate FIDO registration.");
 
-            String urlString = "https://api.mr-b.click/oauth2/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=startRegistration&scope=openid+profile+email+phone&redirect_uri=mrbapp://android.mr-b.click/authResponse";
+            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=startRegistration&scope=openid+profile+email+phone&redirect_uri=mrbapp://android.mr-b.click/authResponse";
             Log.d(TAG, "URL to launch is: " + urlString);
             Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(urlString));
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -412,7 +412,7 @@ public class MainActivity extends Activity {
                     msg.setText(res);
                     username.setText(Preferences.getSettingsParam("username"));
                     //get the notification token and send to server
-                    String registerResponse = Curl.putInSeparateThread("https://api.mr-b.click/oauth2/clientnotificationkeys/" + Preferences.getSettingsParam("username"), "", notificationTokenManager.notificationToken);
+                    String registerResponse = Curl.putInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/clientnotificationkeys/" + Preferences.getSettingsParam("username"), "", notificationTokenManager.notificationToken);
                 } catch (Exception e){
                     msg.setText("Registration operation failed.\n"+e);
                 }
@@ -422,7 +422,7 @@ public class MainActivity extends Activity {
             }
         } else if (requestCode == DEREG_ACTIVITY_RES_4) {
             if (resultCode == RESULT_OK) {
-                String deregisterResponse = Curl.deleteInSeparateThread("https://api.mr-b.click/oauth2/clientnotificationkeys/" + Preferences.getSettingsParam("username"));
+                String deregisterResponse = Curl.deleteInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/clientnotificationkeys/" + Preferences.getSettingsParam("username"));
                 Preferences.setSettingsParam("keyID", "");
                 Preferences.setSettingsParam("username", "");
                 setContentView(R.layout.activity_main);
@@ -467,7 +467,7 @@ public class MainActivity extends Activity {
                             String AuthResponseB64 = Base64.encodeToString(AuthResponse.getBytes(), Base64.NO_WRAP);
                             Log.d(TAG, "Base64 encoded AuthResponse message is: " + AuthResponseB64);
                             Log.d(TAG, "Authentication Session is " + authenticationSession);
-                            String registerResponse = Curl.postInSeparateThread("https://api.mr-b.click/oauth2/fidoauthresponse/" + authenticationSession, "", AuthResponseB64);
+                            String registerResponse = Curl.postInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/fidoauthresponse/" + authenticationSession, "", AuthResponseB64);
                         }
                         catch (Exception ex) {
                             Log.d(TAG, "Failed to process notification");
@@ -486,7 +486,7 @@ public class MainActivity extends Activity {
                             String AuthResponseB64 = Base64.encodeToString(AuthResponse.getBytes(), Base64.NO_WRAP);
                             Log.d(TAG, "Base64 encoded AuthResponse message is: " + AuthResponseB64);
                             String redirect_uri = "mrbapp://android.mr-b.click/authResponse";
-                            String urlString = "https://api.mr-b.click/oauth2/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=authenticated&scope=openid+profile+email+phone&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
+                            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=authenticated&scope=openid+profile+email+phone&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
                             Log.d(TAG, "URL to launch is: " + urlString);
                             //section to launch OIDC via device browser
                         /*

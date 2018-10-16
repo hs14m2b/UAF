@@ -195,6 +195,23 @@
                 android:ems="10"
                 android:inputType="text"
                 android:textSize="9sp" />
+
+            <TextView
+                android:id="@+id/textOidcServer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="OIDC Server Endpoint" />
+
+            <EditText
+                android:id="@+id/oidcServer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:ems="10"
+                android:inputType="text"
+                android:textSize="9sp" />
+
         </LinearLayout>
     </ScrollView>
 
