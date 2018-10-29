@@ -125,8 +125,9 @@ public class MainActivity extends Activity {
         Log.i("processUri: ", "Authorization code is " + authCode);
         Log.i("processUri: ", "State is " + authState);
         msg.setText("State is " + authState);//get the tokens
-        String postData = "grant_type=authorization_code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
-        String postHeader = "Content-type:application/x-www-form-urlencoded";
+        //String postData = "grant_type=authorization_code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
+        String postData = "grant_type=authorization_code&code_verifier=11234567890123456789012345678901234567890123&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
+        String postHeader = "Content-type:application/x-www-form-urlencoded Authorization:Basic&nbsp;bmhzLW9ubGluZTpzZWNyZXQ=";
         String responseTokens = Curl.postInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/token", postHeader, postData);
         Log.i("processUri: ", "Tokens are " + responseTokens);
         tokens = gson.fromJson(responseTokens, OIDCTokens.class);
@@ -140,6 +141,29 @@ public class MainActivity extends Activity {
             regRequest();
         }
     }
+
+    private void getTokens(String uri)
+    {
+        Log.i("processUri: ", "Launch URL is " + uri);
+        // may be some test here with your custom uri
+        String authCode = uri.substring(uri.indexOf("code=")+5); // "str" is set
+        authCode = authCode.substring(0, authCode.length()-3);
+        //String authState = uri.getQueryParameter("state"); // "string" is set
+        Log.i("processUri: ", "Authorization code is " + authCode);
+        //Log.i("processUri: ", "State is " + authState);
+        //msg.setText("State is " + authState);//get the tokens
+        //String postData = "grant_type=authorization_code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
+        String postData = "grant_type=authorization_code&code_verifier=11234567890123456789012345678901234567890123&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
+        String postHeader = "Content-type:application/x-www-form-urlencoded Authorization:Basic&nbsp;bmhzLW9ubGluZTpzZWNyZXQ=";
+        String responseTokens = Curl.postInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/token", postHeader, postData);
+        Log.i("processUri: ", "Tokens are " + responseTokens);
+        tokens = gson.fromJson(responseTokens, OIDCTokens.class);
+        Log.i("processUri: ", "Cast responseTokens into object ");
+        Log.i("processUri: ", "Access Token is " + tokens.access_token);
+        Log.i("processUri: ", "ID Token is " + tokens.id_token);
+        msg.setText(msg.getText() + "\nIdentity Token is " + tokens.id_token);
+    }
+
 
     private void processNotification(String authenticationSession)
     {
@@ -205,7 +229,9 @@ public class MainActivity extends Activity {
 
             msg.setText("Retrieving tokens to initiate FIDO registration.");
 
-            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=startRegistration&scope=openid+profile+email+phone&redirect_uri=mrbapp://android.mr-b.click/authResponse";
+            //String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=startRegistration&scope=openid+profile+email+phone&redirect_uri=mrbapp://android.mr-b.click/authResponse";
+            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?scope=openid&state=startRegistration&client_id=nhs-online&response_type=code&code_challenge=znWZj1iRORuIZi3ivOXFG5Ttk75O8e_uqhySIgR8MPk&code_challenge_method=S256&redirect_uri=mrbapp://android.mr-b.click/authResponse";
+            //String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?scope=openid&client_id=nhs-online&redirect_uri=mrbapp://android.mr-b.click/authResponse&response_type=code&code_challenge=znWZj1iRORuIZi3ivOXFG5Ttk75O8e_uqhySIgR8MPk&code_challenge_method=S256
             Log.d(TAG, "URL to launch is: " + urlString);
             Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(urlString));
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -412,7 +438,8 @@ public class MainActivity extends Activity {
                     msg.setText(res);
                     username.setText(Preferences.getSettingsParam("username"));
                     //get the notification token and send to server
-                    String registerResponse = Curl.putInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/clientnotificationkeys/" + Preferences.getSettingsParam("username"), "", notificationTokenManager.notificationToken);
+                    //commented out for PoC with NHS  Logon
+                    //String registerResponse = Curl.putInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/clientnotificationkeys/" + Preferences.getSettingsParam("username"), "", notificationTokenManager.notificationToken);
                 } catch (Exception e){
                     msg.setText("Registration operation failed.\n"+e);
                 }
@@ -422,7 +449,8 @@ public class MainActivity extends Activity {
             }
         } else if (requestCode == DEREG_ACTIVITY_RES_4) {
             if (resultCode == RESULT_OK) {
-                String deregisterResponse = Curl.deleteInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/clientnotificationkeys/" + Preferences.getSettingsParam("username"));
+                //commented out for NHS  Logon PoC
+                //String deregisterResponse = Curl.deleteInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/clientnotificationkeys/" + Preferences.getSettingsParam("username"));
                 Preferences.setSettingsParam("keyID", "");
                 Preferences.setSettingsParam("username", "");
                 setContentView(R.layout.activity_main);
@@ -458,6 +486,7 @@ public class MainActivity extends Activity {
 //	            String res = auth.sendAuthResponse(asmResponse);
                     if (processingNotification)
                     {
+                        //processing logon for external RP
                         try {
                             processingNotification = false;
                             JSONObject json = new JSONObject(uafMessage);
@@ -478,6 +507,7 @@ public class MainActivity extends Activity {
                     }
                     else {
                         //NEW CODE - invoke OIDC URL
+                        //app-based logon
                         try {
                             JSONObject json = new JSONObject(uafMessage);
                             String AuthResponse = json.get("uafProtocolMessage").toString();
@@ -486,7 +516,9 @@ public class MainActivity extends Activity {
                             String AuthResponseB64 = Base64.encodeToString(AuthResponse.getBytes(), Base64.NO_WRAP);
                             Log.d(TAG, "Base64 encoded AuthResponse message is: " + AuthResponseB64);
                             String redirect_uri = "mrbapp://android.mr-b.click/authResponse";
-                            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=authenticated&scope=openid+profile+email+phone&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
+                            //String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=authenticated&scope=openid+profile+email+phone&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
+                            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?scope=openid&client_id=nhs-online&response_type=code&code_challenge=znWZj1iRORuIZi3ivOXFG5Ttk75O8e_uqhySIgR8MPk&code_challenge_method=S256&state=authenticated&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
+                            //String urlString = Preferences.getSettingsParam("oidcServerEndpoint") + "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&state=authenticated&scope=openid+profile+email+phone&redirect_uri=" + redirect_uri + "&fidoAuthResponse=" + AuthResponseB64;
                             Log.d(TAG, "URL to launch is: " + urlString);
                             //section to launch OIDC via device browser
                         /*
@@ -504,8 +536,9 @@ public class MainActivity extends Activity {
                             //section to launch OIDC via direct calls
                             String targetUrl = Curl.getInSeparateThread(urlString, "", redirect_uri);
                             Log.d(TAG, "targetUrl is: " + targetUrl);
-                            Uri uri = Uri.parse(targetUrl);
-                            processUri(uri);
+                            getTokens(targetUrl);
+                            //Uri uri = Uri.parse(targetUrl);
+                            //processUri(uri);
                         } catch (Exception ex) {
                             //OLD Code - invoke FIDO Server directly to validate auth response
                             String res = auth.clientSendResponse(uafMessage);

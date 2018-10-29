@@ -220,6 +220,7 @@ public class Curl {
 	}
 	
 	public static String post(String url, String[] header, String data) {
+		Log.d("CURL: ", "Entered CURL post with url: " + url + " and headers length: " + header.length + " and data: " + data);
 		String ret = "";
 		try {
 
@@ -229,7 +230,7 @@ public class Curl {
 			if (header != null){
 				for (String h : header){
 					String[] split = h.split(":");
-					if (split.length >1) request.addHeader(split[0], split[1]);
+					if (split.length >1) request.addHeader(split[0], split[1].replace("&nbsp;"," "));
 				}
 			}
 			request.setEntity(new StringEntity(data));
