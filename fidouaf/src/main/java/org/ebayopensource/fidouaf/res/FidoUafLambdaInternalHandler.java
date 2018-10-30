@@ -74,10 +74,7 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
             JSONObject event2 = null;
             try {
 				event2 = (JSONObject)parser.parse(strEvent);
-		        if (event2.containsKey("source") && 
-		        		event2.containsKey("detail-type") && 
-		        		event2.get("source").toString().equals("aws.events") && 
-		        		event2.get("detail-type").toString().equals("Scheduled Event"))
+		        if (event2.containsKey("Records"))
 		        {
 		        	logger.info("Received a keep-alive event");
 		            OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");

@@ -88,10 +88,8 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
         }
         
         //check if keep-alive event
-        if (event.containsKey("source") && 
-        		event.containsKey("detail-type") && 
-        		event.get("source").toString().equals("aws.events") && 
-        		event.get("detail-type").toString().equals("Scheduled Event"))
+        //if (event.containsKey("source") && event.containsKey("detail-type") && event.get("source").toString().equals("aws.events") && event.get("detail-type").toString().equals("Scheduled Event"))
+        if (event.containsKey("Records"))
         {
         	logger.info("Received a keep-alive event");
         	logger.info("Updating secret key");
