@@ -69,7 +69,7 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
 			String json_body = gson.toJson(ar_response[0]);
 			outputStream.write(json_body.getBytes());
             
-        } catch(ParseException pex) {
+        } catch(Exception pex) {
 	        //check if keep-alive event
             JSONObject event2 = null;
             try {

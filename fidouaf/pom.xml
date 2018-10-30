@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.ebayopensource</groupId>
 	<artifactId>fidouaf</artifactId>
-	<version>0.0.06-SNAPSHOT</version>
+	<version>0.0.09-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>
