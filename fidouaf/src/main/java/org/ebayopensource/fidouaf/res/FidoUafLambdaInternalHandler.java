@@ -9,10 +9,12 @@ import java.io.OutputStreamWriter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fidouaf.res.util.NotaryImpl;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -27,13 +29,12 @@ import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.util.IOUtils;
-import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
+//import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import java.util.Base64;
 
 public class FidoUafLambdaInternalHandler extends FidoUafResource implements RequestStreamHandler{
 	// Initialize the Log4j logger.
-	//static final Logger logger = LogManager.getLogger(FidoUafLambdaHandler.class);
+	static final Logger logger = LogManager.getLogger(FidoUafLambdaInternalHandler.class);
 
 	//static final String UserTableName = System.getenv("DB_USER_TABLE_NAME");
 	//static final String DefaultUser = System.getenv("DEFAULT_USER_IDENTITY"); // b342ff9c-9924-4421-9071-32763f907d9b
@@ -48,22 +49,21 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
 
 
 	public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
-    	LambdaLogger logger = context.getLogger();
 		//This lambda will exercise all the different components utilised by the CID hub to ensure that their health is OK.
 		//Returns 200 with output of each check
 		//Returns 500 with output of each check if it fails
         //LambdaLogger logger = context.getLogger(); //basic cloudwatch logger
-        logger.log("Loading Java Lambda handler");
+        logger.info("Loading Java Lambda handler");
 
         //BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String strEvent = IOUtils.toString(inputStream);
-		logger.log("Successfully read inputStream into String");
-		logger.log(strEvent);
+		logger.info("Successfully read inputStream into String");
+		logger.info(strEvent);
         JSONArray event = null;
         try {
             event = (JSONArray)parser.parse(strEvent);
-			logger.log("Successfully parsed the input stream to a JSONObject");
-			logger.log(event.toJSONString());
+			logger.info("Successfully parsed the input stream to a JSONObject");
+			logger.info(event.toJSONString());
 			AuthenticatorRecord[] ar_response = processAuthResponse(event.toJSONString());
 			//Simplification - only return the first authenticator record
 			String json_body = gson.toJson(ar_response[0]);
@@ -79,15 +79,18 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
 		        		event2.get("source").toString().equals("aws.events") && 
 		        		event2.get("detail-type").toString().equals("Scheduled Event"))
 		        {
-		        	logger.log("Received a keep-alive event");
+		        	logger.info("Received a keep-alive event");
 		            OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");
+		        	logger.info("Updating secret key");
+		            NotaryImpl.getInstance().rotateSecret();
+		        	logger.info("Secret key updated");
 		            writer.write("{ \"response\" : \"OK\"}");  
 		            writer.close();
 		            return;
 		        }
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
-				logger.log("Failed to parse the input stream to a JSONObject");
+				logger.info("Failed to parse the input stream to a JSONObject");
 			}
         }
 	}

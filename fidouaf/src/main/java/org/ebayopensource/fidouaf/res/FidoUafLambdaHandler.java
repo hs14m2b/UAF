@@ -13,6 +13,7 @@ import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fidouaf.res.util.NotaryImpl;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -39,7 +40,7 @@ import java.util.Base64;
 
 public class FidoUafLambdaHandler extends FidoUafResource implements RequestStreamHandler{
 	// Initialize the Log4j logger.
-	//static final Logger logger = LogManager.getLogger(FidoUafLambdaHandler.class);
+	static final Logger logger = LogManager.getLogger(FidoUafLambdaHandler.class);
 
 	//static final String UserTableName = System.getenv("DB_USER_TABLE_NAME");
 	//static final String DefaultUser = System.getenv("DEFAULT_USER_IDENTITY"); // b342ff9c-9924-4421-9071-32763f907d9b
@@ -54,12 +55,12 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 
     @SuppressWarnings({ "unchecked", "unused" })
 	public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
-    	LambdaLogger logger = context.getLogger();
+    	//LambdaLogger logger = context.getLogger();
 		//This lambda will exercise all the different components utilised by the CID hub to ensure that their health is OK.
 		//Returns 200 with output of each check
 		//Returns 500 with output of each check if it fails
         //LambdaLogger logger = context.getLogger(); //basic cloudwatch logger
-        logger.log("Loading Java Lambda handler of healthcheck");
+        logger.info("Loading Java Lambda handler of healthcheck");
 
         JSONObject responseJson = new JSONObject();
         JSONObject responseBody = new JSONObject();
@@ -67,23 +68,23 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
         String responseCode = "200";
 		//String user_identifier = DefaultUser;
 		String token_cookie = "";
-        logger.log("Created response json object for population");
+        logger.info("Created response json object for population");
 
         //BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String strEvent = IOUtils.toString(inputStream);
-		logger.log("Successfully read inputStream into String");
-		logger.log(strEvent);
+		logger.info("Successfully read inputStream into String");
+		logger.info(strEvent);
         JSONObject event = null;
         try {
             event = (JSONObject)parser.parse(strEvent);
-			logger.log("Successfully parsed the input stream to a JSONObject");
-			logger.log(event.toJSONString());
+			logger.info("Successfully parsed the input stream to a JSONObject");
+			logger.info(event.toJSONString());
             
         } catch(ParseException pex) {
             responseJson.put("statusCode", "400");
             responseJson.put("exception", pex);
-			logger.log("Failed to parse the input stream to a JSONObject");
-			logger.log(pex.toString());
+			logger.info("Failed to parse the input stream to a JSONObject");
+			logger.info(pex.toString());
         }
         
         //check if keep-alive event
@@ -92,7 +93,10 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
         		event.get("source").toString().equals("aws.events") && 
         		event.get("detail-type").toString().equals("Scheduled Event"))
         {
-        	logger.log("Received a keep-alive event");
+        	logger.info("Received a keep-alive event");
+        	logger.info("Updating secret key");
+            NotaryImpl.getInstance().rotateSecret();
+        	logger.info("Secret key updated");
             OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");
             writer.write("{ \"response\" : \"OK\"}");  
             writer.close();
@@ -106,24 +110,24 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 		if (event.containsKey("pathParameters"))
 		{
 			pathParameters =((JSONObject)event.get("pathParameters")).get("proxy").toString();
-			logger.log("pathParameters are " + pathParameters);
+			logger.info("pathParameters are " + pathParameters);
 		}
 		//switch for different path parameters
 		if (pathParameters.startsWith("regRequest/") || pathParameters.equals("regRequest"))
 		{
-			logger.log("Processing Registration Request");
+			logger.info("Processing Registration Request");
 			//get the username
 			//check for Authorization header
 			JSONObject headers = (JSONObject)event.get("headers");
 			if (headers == null) headers = new JSONObject();
-			logger.log("Got Headers object");
+			logger.info("Got Headers object");
 			String access_token_jwt = "";
 			String username = "";
 			if (headers.containsKey("Authorization"))
 			{
-				logger.log("Authorization key present in headers");
+				logger.info("Authorization key present in headers");
 				access_token_jwt = headers.get("Authorization").toString();
-				logger.log("Access Token is " + access_token_jwt);
+				logger.info("Access Token is " + access_token_jwt);
 				try {
 					JwtConsumer firstPassJwtConsumer = new JwtConsumerBuilder()
 			            .setSkipAllValidators()
@@ -142,7 +146,7 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 			{
 				username = pathParameters.substring(11);
 			}
-			logger.log("Username for registration is " + username);
+			logger.info("Username for registration is " + username);
 			RegistrationRequest[] rr_response = this.getRegisReqPublic(username);
 			json_body = gson.toJson(rr_response);
 		}
@@ -165,9 +169,9 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 		else if (pathParameters.startsWith("authResponse"))
 		{
 			String post_body = event.get("body").toString();
-			logger.log("The auth Response is " + post_body);
+			logger.info("The auth Response is " + post_body);
 			String post_body_b64 = Base64.getEncoder().encodeToString(post_body.getBytes());
-			logger.log("The B64 encoded auth Response is " + post_body_b64);
+			logger.info("The B64 encoded auth Response is " + post_body_b64);
 			AuthenticatorRecord[] ar_response = processAuthResponse(post_body);
 			json_body = gson.toJson(ar_response);
 			
@@ -205,7 +209,7 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
         //responseJson.put("body", responseBody.toString());  
         responseJson.put("body", json_body);
 
-        logger.log(responseJson.toJSONString());
+        logger.info(responseJson.toJSONString());
         OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8");
         writer.write(responseJson.toJSONString());  
         writer.close();
@@ -217,7 +221,7 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 		String[] cookies = Cookies.split(";");
 		for (int i = 0; i < cookies.length; i++) {
 			String cookie = cookies[i].trim();
-			//logger.log("cookie number " + i + " is " + cookie);
+			//logger.info("cookie number " + i + " is " + cookie);
 			String[] key_value = cookie.split("=",2);
 			if (key_value[0] == "token")
 			{
