@@ -11,6 +11,15 @@
     <Root level="trace">
       <AppenderRef ref="Lambda" />
     </Root>
+    <Root level="info">
+      <AppenderRef ref="Lambda" />
+    </Root>    
+    <Root level="error">
+      <AppenderRef ref="Lambda" />
+    </Root>    
+    <Root level="warn">
+      <AppenderRef ref="Lambda" />
+    </Root>    
   </Loggers>
 </Configuration>
  
