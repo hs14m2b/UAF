@@ -78,6 +78,11 @@ public class RegistrationResponseProcessingTest {
 		public String sign(String dataToSign) {
 			return SHA.sha256(dataToSign);
 		}
+
+		public void rotateSecret() {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 
 }

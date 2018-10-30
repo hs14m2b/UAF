@@ -41,6 +41,11 @@ public class AuthenticationRequestGenerationTest {
 			// For testing
 			return TEST_SIGNATURE;
 		}
+
+		public void rotateSecret() {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 
 }

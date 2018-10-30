@@ -21,4 +21,6 @@ public interface Notary {
 	public String sign(String dataToSign);
 
 	public boolean verify(String dataToSign, String signature);
+	
+	public void rotateSecret();
 }
