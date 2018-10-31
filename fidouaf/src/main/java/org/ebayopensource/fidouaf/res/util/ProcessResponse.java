@@ -16,25 +16,41 @@
 
 package org.ebayopensource.fidouaf.res.util;
 
+import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
 import org.ebayopensource.fido.uaf.ops.AuthenticationResponseProcessing;
 import org.ebayopensource.fido.uaf.ops.RegistrationResponseProcessing;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fido.uaf.storage.StorageInterface;
 
 public class ProcessResponse {
 
-	private static final int SERVER_DATA_EXPIRY_IN_MS = 5 * 60 * 1000;
+	private static int SERVER_DATA_EXPIRY_IN_MS = 5 * 60 * 1000;
 
+	private Notary _notary = null;
+	private StorageInterface _storage = null;
+	
 	// Gson gson = new Gson ();
 
+	public ProcessResponse(Notary notary, StorageInterface storage, int data_expiry)
+	{
+		this._notary = notary;
+		this._storage = storage;
+		SERVER_DATA_EXPIRY_IN_MS = data_expiry;
+	}
+	
+	public ProcessResponse() {
+		this._notary = NotaryImpl.getInstance();
+		this._storage = StorageImpl.getInstance();
+	}
 	public AuthenticatorRecord[] processAuthResponse(AuthenticationResponse resp) {
 		AuthenticatorRecord[] result = null;
 		try {
 			result = new AuthenticationResponseProcessing(
-					SERVER_DATA_EXPIRY_IN_MS, NotaryImpl.getInstance()).verify(
-					resp, StorageImpl.getInstance());
+					SERVER_DATA_EXPIRY_IN_MS, _notary).verify(
+					resp, _storage);
 		} catch (Exception e) {
 			System.out
 					.println("!!!!!!!!!!!!!!!!!!!..............................."
@@ -50,7 +66,7 @@ public class ProcessResponse {
 		RegistrationRecord[] result = null;
 		try {
 			result = new RegistrationResponseProcessing(
-					SERVER_DATA_EXPIRY_IN_MS, NotaryImpl.getInstance())
+					SERVER_DATA_EXPIRY_IN_MS, _notary)
 					.processResponse(resp);
 		} catch (Exception e) {
 			System.out

@@ -31,8 +31,8 @@ import java.security.MessageDigest;
  */
 public class NotaryImplStub implements Notary {
 
-    private static final Logger logger = LogManager.getLogger(NotaryImpl.class);
-	private String hmacSecret = "HMAC-is-just-one-way";
+    private static final Logger logger = LogManager.getLogger(NotaryImplStub.class);
+	private String hmacSecret = "washdefrioiugiuudfvdruhiueesrvskjdfhvsetiu";
 	private static Notary instance = new NotaryImplStub();
 
 	private NotaryImplStub() {

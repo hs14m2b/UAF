@@ -8,6 +8,7 @@ import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
 import org.ebayopensource.fido.uaf.storage.StorageInterface;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
@@ -77,6 +78,16 @@ public class AuthenticationResponseProcessingTest {
 		public void update(RegistrationRecord[] records) {
 			// TODO Auto-generated method stub
 			
+		}
+
+		public void deleteRegistrationRecord(String key) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public Map<String, RegistrationRecord> dbDump() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 		
 	}

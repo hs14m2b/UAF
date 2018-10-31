@@ -16,6 +16,8 @@
 
 package org.ebayopensource.fido.uaf.storage;
 
+import java.util.Map;
+
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
 
 public interface StorageInterface {
@@ -30,4 +32,8 @@ public interface StorageInterface {
 	public RegistrationRecord readRegistrationRecord(String key);
 
 	public void update(RegistrationRecord[] records);
+
+	public void deleteRegistrationRecord(String key);
+
+	public Map<String, RegistrationRecord> dbDump();
 }
