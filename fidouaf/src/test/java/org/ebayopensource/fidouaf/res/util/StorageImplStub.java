@@ -85,11 +85,15 @@ public class StorageImplStub implements StorageInterface {
 		logger.info("Entered store with records length " + records.length);
 		if (records != null && records.length > 0) {
 			for (int i = 0; i < records.length; i++) {
-				if (!db.containsKey(records[i].authenticator.toString())) {
-					logger.info("Storing record for user  " + records[i].username);
-					records[i].authenticator.username = records[i].username;
-					db.put(records[i].authenticator.toString(), records[i]);
+				if (db.containsKey(records[i].authenticator.toString())) {
+					logger.info("Removing record for user  " + records[i].username + " so it can be replaced with new version");
+					db.remove(records[i].authenticator.toString());
+					logger.info("Removed record for user  " + records[i].username );
 				}
+				logger.info("Storing record for user  " + records[i].username);
+				records[i].authenticator.username = records[i].username;
+				logger.info("Record key is  " + records[i].authenticator.toString());
+				db.put(records[i].authenticator.toString(), records[i]);
 			}
 		}
 	}

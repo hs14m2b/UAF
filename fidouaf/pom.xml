@@ -95,6 +95,11 @@
 			<artifactId>fido-uaf-core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+ 		<dependency>
+			<groupId>org.ebayopensource</groupId>
+			<artifactId>fido-uaf-client-stub</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>

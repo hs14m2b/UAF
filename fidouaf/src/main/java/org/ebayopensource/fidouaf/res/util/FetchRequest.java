@@ -28,11 +28,11 @@ public class FetchRequest {
 	private String[] aaids;
 	private Notary notary ;
 
-	public FetchRequest(Notary notaryStub)
+	public FetchRequest(String appId, String[] aaids, Notary notaryStub)
 	{
 		this.notary = notaryStub;
-		this.appId = "";
-		this.aaids = null;
+		this.appId = appId;
+		this.aaids = aaids;
 		
 	}
 	
