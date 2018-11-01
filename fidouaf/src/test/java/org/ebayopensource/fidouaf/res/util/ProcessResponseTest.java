@@ -47,7 +47,7 @@ public class ProcessResponseTest {
 		logger.info("Completed basic test");
 	}
 	
-	//@Test
+	@Test
 	public void test_b() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
 		logger.info("Starting process registration response test");
 		FetchRequest _fr = new FetchRequest(TestUtils.getAppId(), TestUtils.getAllowedAaids() ,notary);
@@ -112,10 +112,18 @@ public class ProcessResponseTest {
 		logger.info(_arsps);
 		AuthenticationResponse _arsp = gson.fromJson(_arsps,org.ebayopensource.fido.uaf.msg.AuthenticationResponse.class);
 		logger.info("Created real authentication response object from stringified stub object");
-		ProcessResponse _pr = new ProcessResponse(notary, storage, Integer.MAX_VALUE);
+		ProcessResponse _pr = new ProcessResponse(notary, storage, 5*60*1000);
+		logger.info("Processing authentication response - expecting SUCCESS");
 		AuthenticatorRecord[] _arec = _pr.processAuthResponse(_arsp);
 		assertNotNull(_arec[0]);
 		assertTrue(_arec[0].status.equalsIgnoreCase("SUCCESS"));
+		logger.info(_arec[0].status);
+		logger.info("Recreating response processing object with timeout of 1 ms");
+		logger.info("Processing authentication response - expecting FAILURE due to timeout");
+		_pr = new ProcessResponse(notary, storage, 1);
+		_arec = _pr.processAuthResponse(_arsp);
+		assertNotNull(_arec[0]);
+		assertFalse(_arec[0].status.equalsIgnoreCase("SUCCESS"));
 		logger.info(_arec[0].status);
 		logger.info("Completed process authentication response test");
 	}
