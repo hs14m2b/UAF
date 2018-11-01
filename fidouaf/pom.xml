@@ -95,11 +95,6 @@
 			<artifactId>fido-uaf-core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
- 		<dependency>
-			<groupId>org.ebayopensource</groupId>
-			<artifactId>fido-uaf-client-stub</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
@@ -140,5 +135,10 @@
 	  		<artifactId>aws-java-sdk-secretsmanager</artifactId>
 	  		<version>1.11.339</version>
 	  	</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.51</version>
+		</dependency>
 	</dependencies>
 </project>
