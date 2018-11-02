@@ -27,7 +27,7 @@ import org.ebayopensource.fido.uaf.storage.StorageInterface;
 
 public class ProcessResponse {
 
-	private static int SERVER_DATA_EXPIRY_IN_MS = 5 * 60 * 1000;
+	private static int SERVER_DATA_EXPIRY_IN_MS = Integer.parseInt(System.getenv("FIDO_EXPIRY_MSECS"));
 
 	private Notary notary = null;
 	private StorageInterface storage = null;

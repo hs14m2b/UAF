@@ -42,7 +42,7 @@ public class ProcessResponseTest {
 	@Test
 	public void test_a() {
 		logger.info("Starting basic test");
-		ProcessResponse _pr = new ProcessResponse(notary, storage, Integer.MAX_VALUE);
+		ProcessResponse _pr = new ProcessResponse(notary, storage);
 		assertNotNull(_pr); 
 		logger.info("Completed basic test");
 	}
@@ -56,7 +56,7 @@ public class ProcessResponseTest {
 		RegistrationRequest _rr = _fr.getRegistrationRequest(TestUtils.getUserName());
 		String _rrs = gson.toJson(_rr, RegistrationRequest.class);
 		RegistrationRequest _rrstub = gson.fromJson(_rrs,RegistrationRequest.class);
-		ProcessResponse _pr = new ProcessResponse(notary, storage, 5*60*1000);
+		ProcessResponse _pr = new ProcessResponse(notary, storage);
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDsA", new org.bouncycastle.jce.provider.BouncyCastleProvider());
         ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256r1");
         keyGen.initialize(ecSpec, new SecureRandom());
@@ -114,7 +114,7 @@ public class ProcessResponseTest {
 		logger.info(_arsps);
 		AuthenticationResponse _arsp = gson.fromJson(_arsps,AuthenticationResponse.class);
 		logger.info("Created real authentication response object from stringified stub object");
-		ProcessResponse _pr = new ProcessResponse(notary, storage, 5*60*1000);
+		ProcessResponse _pr = new ProcessResponse(notary, storage);
 		logger.info("Processing authentication response - expecting SUCCESS");
 		AuthenticatorRecord[] _arec = _pr.processAuthResponse(_arsp);
 		assertNotNull(_arec[0]);

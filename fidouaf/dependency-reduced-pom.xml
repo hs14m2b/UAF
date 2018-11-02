@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.ebayopensource</groupId>
   <artifactId>fidouaf</artifactId>
-  <version>0.0.09-SNAPSHOT</version>
+  <version>0.0.10-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>
@@ -60,6 +60,8 @@
             <PropertyName2>PropertyValue2</PropertyName2>
           </systemPropertyVariables>
           <environmentVariables>
+            <FIDO_EXPIRY_MSECS>300000</FIDO_EXPIRY_MSECS>
+            <SECRET_KEY_NAME>test/HMACNotarySecret</SECRET_KEY_NAME>
             <DB_USER_TABLE_NAME>users</DB_USER_TABLE_NAME>
             <DEFAULT_USER_IDENTITY>b342ff9c-9924-4421-9071-32763f907d9b</DEFAULT_USER_IDENTITY>
           </environmentVariables>
