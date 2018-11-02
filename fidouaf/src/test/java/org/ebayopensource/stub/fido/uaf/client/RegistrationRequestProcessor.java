@@ -37,6 +37,10 @@ public class RegistrationRequestProcessor {
 
 
 		setAppId(regRequest, response);
+		if (regRequest.header.appID == null || regRequest.header.appID.equals(""))
+		{
+			regRequest.header.appID = getFacetId();
+		}
 		response.header = new OperationHeader();
 		response.header.serverData = regRequest.header.serverData;
 		response.header.appID = regRequest.header.appID;
@@ -55,7 +59,7 @@ public class RegistrationRequestProcessor {
 	}
 
 	private String getFacetId() {
-		return "";
+		return "android:apk-key-hash:CxHdfRYR5KEkAfDMe4jOHGt6RKg";
 	}
 
 	private void setAssertions(RegistrationResponse response, RegAssertionBuilder builder) {

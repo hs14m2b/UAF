@@ -24,6 +24,8 @@ import java.util.logging.Logger;
 import org.apache.commons.codec.binary.Base64;
 import org.ebayopensource.fido.uaf.crypto.CertificateValidator;
 import org.ebayopensource.fido.uaf.crypto.CertificateValidatorImpl;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidator;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidatorImpl;
 import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticatorRegistrationAssertion;
 import org.ebayopensource.fido.uaf.msg.FinalChallengeParams;
@@ -46,9 +48,11 @@ public class RegistrationResponseProcessing {
 	private Notary notary = null;
 	private Gson gson = new Gson();
 	private CertificateValidator certificateValidator;
+	private FinalChallengeParamsValidator finalChallengeParamsValidator;
 
 	public RegistrationResponseProcessing() {
 		this.certificateValidator = new CertificateValidatorImpl();
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
 	public RegistrationResponseProcessing(long serverDataExpiryInMs,
@@ -56,6 +60,7 @@ public class RegistrationResponseProcessing {
 		this.serverDataExpiryInMs = serverDataExpiryInMs;
 		this.notary = notary;
 		this.certificateValidator = new CertificateValidatorImpl();
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
 	public RegistrationResponseProcessing(long serverDataExpiryInMs,
@@ -63,8 +68,25 @@ public class RegistrationResponseProcessing {
 		this.serverDataExpiryInMs = serverDataExpiryInMs;
 		this.notary = notary;
 		this.certificateValidator = certificateValidator;
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
+	public RegistrationResponseProcessing(long serverDataExpiryInMs,
+			Notary notary, FinalChallengeParamsValidator finalChallengeParamsValidator) {
+		this.serverDataExpiryInMs = serverDataExpiryInMs;
+		this.notary = notary;
+		this.certificateValidator = new CertificateValidatorImpl();
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
+	}
+
+	public RegistrationResponseProcessing(long serverDataExpiryInMs,
+			Notary notary, FinalChallengeParamsValidator finalChallengeParamsValidator,
+			CertificateValidator certificateValidator) {
+		this.serverDataExpiryInMs = serverDataExpiryInMs;
+		this.notary = notary;
+		this.certificateValidator = certificateValidator;
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
+	}
 	public RegistrationRecord[] processResponse(RegistrationResponse response)
 			throws Exception {
 		checkAssertions(response);
@@ -248,8 +270,12 @@ public class RegistrationResponseProcessing {
 		}
 	}
 
-	private void checkFcp(FinalChallengeParams fcp) {
-		// TODO Auto-generated method stub
+	private void checkFcp(FinalChallengeParams fcp) throws Exception {
+		if (finalChallengeParamsValidator.validate(fcp)) {
+			return;
+		} else {
+			throw new Exception("Invalid Final Challenge Parameters");
+		}
 
 	}
 

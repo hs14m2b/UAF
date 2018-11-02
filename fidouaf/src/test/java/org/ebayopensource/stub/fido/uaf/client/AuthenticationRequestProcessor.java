@@ -43,6 +43,10 @@ public class AuthenticationRequestProcessor {
 		AuthAssertionBuilder builder = new AuthAssertionBuilder(fidoSigner, signingKeyPair);
 		Gson gson = new Gson();
 
+		if (request.header.appID == null || request.header.appID.equals(""))
+		{
+			request.header.appID = getFacetId();
+		}
 
 		response.header = new OperationHeader();
 		response.header.serverData = request.header.serverData;
@@ -61,7 +65,7 @@ public class AuthenticationRequestProcessor {
 	}
 
 	private String getFacetId() {
-		return "";
+		return "android:apk-key-hash:CxHdfRYR5KEkAfDMe4jOHGt6RKg";
 	}
 
 	private void setAssertions(AuthenticationResponse response, AuthAssertionBuilder builder) {

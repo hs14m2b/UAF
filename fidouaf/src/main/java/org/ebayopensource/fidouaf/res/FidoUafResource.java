@@ -209,7 +209,8 @@ public class FidoUafResource {
 		//return uriInfo.getBaseUri() + "v1/public/uaf/facets";
 		// Or you can define it statically
 		//TODO - determine app id url dynamically
-		return "https://api.mr-b.click/fido/fidouaf/v1/public/uaf/facets";
+		//return "https://api.mr-b.click/fido/fidouaf/v1/public/uaf/facets";
+		return "";
 	}
 
 	public RegistrationRecord[] processRegResponse(String payload) {

@@ -31,6 +31,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.ebayopensource.fido.uaf.crypto.Asn1;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidator;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidatorImpl;
 import org.ebayopensource.fido.uaf.crypto.KeyCodec;
 import org.ebayopensource.fido.uaf.crypto.NamedCurve;
 import org.ebayopensource.fido.uaf.crypto.Notary;
@@ -54,16 +56,24 @@ public class AuthenticationResponseProcessing {
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	private long serverDataExpiryInMs;
 	private Notary notary;
+	private FinalChallengeParamsValidator finalChallengeParamsValidator;
 
 	public AuthenticationResponseProcessing() {
-
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
 	public AuthenticationResponseProcessing(long serverDataExpiryInMs,
 			Notary notary) {
 		this.serverDataExpiryInMs = serverDataExpiryInMs;
 		this.notary = notary;
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
+	}
 
+	public AuthenticationResponseProcessing(long serverDataExpiryInMs,
+			Notary notary, FinalChallengeParamsValidator finalChallengeParamsValidator) {
+		this.serverDataExpiryInMs = serverDataExpiryInMs;
+		this.notary = notary;
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
 	}
 
 	public AuthenticatorRecord[] verify(AuthenticationResponse response,
@@ -300,8 +310,12 @@ public class AuthenticationResponseProcessing {
 		}
 	}
 
-	private void checkFcp(FinalChallengeParams fcp) {
-		// TODO Auto-generated method stub
+	private void checkFcp(FinalChallengeParams fcp) throws Exception {
+		if (finalChallengeParamsValidator.validate(fcp)) {
+			return;
+		} else {
+			throw new Exception("Invalid Final Challenge Parameters");
+		}
 
 	}
 
