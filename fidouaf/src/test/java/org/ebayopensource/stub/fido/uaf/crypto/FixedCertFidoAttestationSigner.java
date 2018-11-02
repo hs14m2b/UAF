@@ -3,7 +3,6 @@ package org.ebayopensource.stub.fido.uaf.crypto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
-import org.ebayopensource.stub.fido.uaf.client.AttestCert;
 
 import java.io.IOException;
 import java.math.BigInteger;
