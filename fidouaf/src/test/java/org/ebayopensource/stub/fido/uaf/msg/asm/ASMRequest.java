@@ -16,7 +16,7 @@
 
 package org.ebayopensource.stub.fido.uaf.msg.asm;
 
-import org.ebayopensource.stub.fido.uaf.msg.Version;
+import org.ebayopensource.fido.uaf.msg.Version;
 
 public class ASMRequest<T> {
 	

@@ -19,11 +19,11 @@ package org.ebayopensource.stub.fido.uaf.client.op;
 import com.google.gson.Gson;
 
 import org.ebayopensource.stub.fido.uaf.client.RegAssertionBuilder;
-import org.ebayopensource.stub.fido.uaf.msg.DeregisterAuthenticator;
-import org.ebayopensource.stub.fido.uaf.msg.DeregistrationRequest;
-import org.ebayopensource.stub.fido.uaf.msg.Operation;
-import org.ebayopensource.stub.fido.uaf.msg.OperationHeader;
-import org.ebayopensource.stub.fido.uaf.msg.Version;
+import org.ebayopensource.fido.uaf.msg.DeregisterAuthenticator;
+import org.ebayopensource.fido.uaf.msg.DeregistrationRequest;
+import org.ebayopensource.fido.uaf.msg.Operation;
+import org.ebayopensource.fido.uaf.msg.OperationHeader;
+import org.ebayopensource.fido.uaf.msg.Version;
 
 import java.util.logging.Logger;
 

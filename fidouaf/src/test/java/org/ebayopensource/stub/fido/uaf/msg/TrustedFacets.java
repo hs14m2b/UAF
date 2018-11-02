@@ -1,5 +1,6 @@
 package org.ebayopensource.stub.fido.uaf.msg;
 
+import org.ebayopensource.fido.uaf.msg.Version;
 
 public class TrustedFacets {
     private Version version;

@@ -88,7 +88,7 @@ public class FidoUafResourceTest {
 		RegistrationRequestProcessor _rrp = new RegistrationRequestProcessor();
 		RegistrationResponse _rrspstub =  _rrp.processRequest(_rrstub, kp);
 		logger.info("Got successful registration response from fido client stub");
-		String _rrsps = gson.toJson(_rrspstub, org.ebayopensource.stub.fido.uaf.msg.RegistrationResponse.class);
+		String _rrsps = gson.toJson(_rrspstub, RegistrationResponse.class);
 		_rrsps = "[" + _rrsps + "]";
 		RegistrationResponse[] _rrsp = gson.fromJson(_rrsps, RegistrationResponse[].class);
 		assertTrue(_rrsp[0].assertions.length > 0);
@@ -147,7 +147,7 @@ public class FidoUafResourceTest {
 		assertTrue(_arspstub.assertions.length > 0);
 		logger.info(_arspstub.assertions[0].assertion);
 		logger.info(_arspstub.assertions[0].assertionScheme);
-		String _arsps =gson.toJson(_arspstub, org.ebayopensource.stub.fido.uaf.msg.AuthenticationResponse.class); 
+		String _arsps =gson.toJson(_arspstub, AuthenticationResponse.class); 
 		_arsps = "[" + _arsps + "]";
 		logger.info(_arsps);
 		AuthenticatorRecord[] _arec = far.processAuthResponse(_arsps);

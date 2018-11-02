@@ -63,7 +63,7 @@ public class ProcessResponseTest {
         kp = keyGen.generateKeyPair();
 		RegistrationRequestProcessor _rrp = new RegistrationRequestProcessor();
 		RegistrationResponse _rrspstub =  _rrp.processRequest(_rrstub, kp);
-		String _rrsps = gson.toJson(_rrspstub, org.ebayopensource.stub.fido.uaf.msg.RegistrationResponse.class);
+		String _rrsps = gson.toJson(_rrspstub, RegistrationResponse.class);
 		RegistrationResponse _rrsp = gson.fromJson(_rrsps, RegistrationResponse.class);
 		assertTrue(_rrsp.assertions.length > 0);
 		logger.info(_rrsp.assertions[0].assertion);
