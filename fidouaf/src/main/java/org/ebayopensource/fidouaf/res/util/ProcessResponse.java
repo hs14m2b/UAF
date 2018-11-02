@@ -16,6 +16,8 @@
 
 package org.ebayopensource.fidouaf.res.util;
 
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidator;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidatorImpl;
 import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
@@ -31,7 +33,7 @@ public class ProcessResponse {
 
 	private Notary notary = null;
 	private StorageInterface storage = null;
-	
+	private FinalChallengeParamsValidator finalChallengeParamsValidator = null;
 	// Gson gson = new Gson ();
 
 	public ProcessResponse(Notary notary, StorageInterface storage, int data_expiry)
@@ -39,12 +41,28 @@ public class ProcessResponse {
 		this.notary = notary;
 		this.storage = storage;
 		SERVER_DATA_EXPIRY_IN_MS = data_expiry;
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 	
+	public ProcessResponse(Notary notary, StorageInterface storage, FinalChallengeParamsValidator finalChallengeParamsValidator, int data_expiry)
+	{
+		this.notary = notary;
+		this.storage = storage;
+		SERVER_DATA_EXPIRY_IN_MS = data_expiry;
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
+	}
+
 	public ProcessResponse(Notary notary, StorageInterface storage)
 	{
 		this.notary = notary;
 		this.storage = storage;
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
+	}
+	public ProcessResponse(Notary notary, StorageInterface storage, FinalChallengeParamsValidator finalChallengeParamsValidator)
+	{
+		this.notary = notary;
+		this.storage = storage;
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
 	}
 //	public ProcessResponse() {
 //		this._notary = NotaryImpl.getInstance();
@@ -54,7 +72,7 @@ public class ProcessResponse {
 		AuthenticatorRecord[] result = null;
 		try {
 			result = new AuthenticationResponseProcessing(
-					SERVER_DATA_EXPIRY_IN_MS, notary).verify(
+					SERVER_DATA_EXPIRY_IN_MS, notary, finalChallengeParamsValidator).verify(
 					resp, storage);
 		} catch (Exception e) {
 			System.out
@@ -71,7 +89,7 @@ public class ProcessResponse {
 		RegistrationRecord[] result = null;
 		try {
 			result = new RegistrationResponseProcessing(
-					SERVER_DATA_EXPIRY_IN_MS, notary)
+					SERVER_DATA_EXPIRY_IN_MS, notary, finalChallengeParamsValidator)
 					.processResponse(resp);
 		} catch (Exception e) {
 			System.out

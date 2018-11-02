@@ -130,7 +130,40 @@ public class ProcessResponseTest {
 		logger.info("Completed process authentication response test");
 	}
 
-	
+	@Test
+	public void test_d() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+		logger.info("Starting process registration response final challenge params failure test");
+		FetchRequest _fr = new FetchRequest(TestUtils.getAppId(), TestUtils.getAllowedAaids() ,notary);
+		RegistrationRequest _rr = _fr.getRegistrationRequest(TestUtils.getUserName());
+		String _rrs = gson.toJson(_rr, RegistrationRequest.class);
+		RegistrationRequest _rrstub = gson.fromJson(_rrs,RegistrationRequest.class);
+		ProcessResponse _pr = new ProcessResponse(notary, storage, new FinalChallengeParamsValidatorFAIL(), 300000);
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDsA", new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256r1");
+        keyGen.initialize(ecSpec, new SecureRandom());
+        kp = keyGen.generateKeyPair();
+		RegistrationRequestProcessor _rrp = new RegistrationRequestProcessor();
+		RegistrationResponse _rrspstub =  _rrp.processRequest(_rrstub, kp);
+		String _rrsps = gson.toJson(_rrspstub, RegistrationResponse.class);
+		RegistrationResponse _rrsp = gson.fromJson(_rrsps, RegistrationResponse.class);
+		assertTrue(_rrsp.assertions.length > 0);
+		logger.info(_rrsp.assertions[0].assertion);
+		logger.info(_rrsp.assertions[0].assertionScheme);
+		//RegistrationResponse _rrsp = getResponse();
+		try
+		{
+			RegistrationRecord[] _rrec = _pr.processRegResponse(_rrsp);
+			assertNotNull(_rrec[0]);
+			assertFalse(_rrec[0].status.equalsIgnoreCase("SUCCESS"));
+			logger.info(_rrec[0].status);
+		}
+		catch (Exception ex)
+		{
+			logger.info("Failed to process registration response" + ex.getMessage());
+		}
+		logger.info("Completed process registration response failure test");
+	}
+
 	private RegistrationResponse getResponse() {
 		return gson.fromJson(getTestRegResponse(), RegistrationResponse.class);
 	}
