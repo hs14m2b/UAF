@@ -28,10 +28,10 @@ import org.ebayopensource.stub.fido.uaf.crypto.KeyCodec;
 import org.ebayopensource.stub.fido.uaf.crypto.SHA;
 import org.ebayopensource.stub.fido.uaf.crypto.X509;
 import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
-import org.ebayopensource.stub.fido.uaf.tlv.AlgAndEncodingEnum;
-import org.ebayopensource.stub.fido.uaf.tlv.Tags;
-import org.ebayopensource.stub.fido.uaf.tlv.TagsEnum;
-import org.ebayopensource.stub.fido.uaf.tlv.TlvAssertionParser;
+import org.ebayopensource.fido.uaf.tlv.AlgAndEncodingEnum;
+import org.ebayopensource.fido.uaf.tlv.Tags;
+import org.ebayopensource.fido.uaf.tlv.TagsEnum;
+import org.ebayopensource.fido.uaf.tlv.TlvAssertionParser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -24,8 +24,8 @@ import org.ebayopensource.stub.fido.uaf.crypto.Base64url;
 import org.ebayopensource.stub.fido.uaf.crypto.FidoSigner;
 import org.ebayopensource.stub.fido.uaf.crypto.SHA;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
-import org.ebayopensource.stub.fido.uaf.tlv.AlgAndEncodingEnum;
-import org.ebayopensource.stub.fido.uaf.tlv.TagsEnum;
+import org.ebayopensource.fido.uaf.tlv.AlgAndEncodingEnum;
+import org.ebayopensource.fido.uaf.tlv.TagsEnum;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
