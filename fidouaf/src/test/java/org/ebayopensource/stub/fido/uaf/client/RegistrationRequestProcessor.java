@@ -19,11 +19,11 @@ package org.ebayopensource.stub.fido.uaf.client;
 import com.google.gson.Gson;
 
 import org.ebayopensource.stub.fido.uaf.crypto.Base64url;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticatorRegistrationAssertion;
-import org.ebayopensource.stub.fido.uaf.msg.FinalChallengeParams;
-import org.ebayopensource.stub.fido.uaf.msg.OperationHeader;
-import org.ebayopensource.stub.fido.uaf.msg.RegistrationRequest;
-import org.ebayopensource.stub.fido.uaf.msg.RegistrationResponse;
+import org.ebayopensource.fido.uaf.msg.AuthenticatorRegistrationAssertion;
+import org.ebayopensource.fido.uaf.msg.FinalChallengeParams;
+import org.ebayopensource.fido.uaf.msg.OperationHeader;
+import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
+import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
 
 import java.security.KeyPair;
 

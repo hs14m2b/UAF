@@ -27,7 +27,7 @@ import org.ebayopensource.stub.fido.uaf.crypto.FixedCertFidoAttestationSigner;
 import org.ebayopensource.stub.fido.uaf.crypto.KeyCodec;
 import org.ebayopensource.stub.fido.uaf.crypto.SHA;
 import org.ebayopensource.stub.fido.uaf.crypto.X509;
-import org.ebayopensource.stub.fido.uaf.msg.RegistrationResponse;
+import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
 import org.ebayopensource.stub.fido.uaf.tlv.AlgAndEncodingEnum;
 import org.ebayopensource.stub.fido.uaf.tlv.Tags;
 import org.ebayopensource.stub.fido.uaf.tlv.TagsEnum;

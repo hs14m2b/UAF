@@ -20,8 +20,8 @@ import com.google.gson.GsonBuilder;
 
 import org.ebayopensource.stub.fido.uaf.client.AuthenticationRequestProcessor;
 import org.ebayopensource.stub.fido.uaf.crypto.FidoSigner;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticationRequest;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticationResponse;
+import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
+import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 
 import java.security.KeyPair;
 import java.util.logging.Logger;

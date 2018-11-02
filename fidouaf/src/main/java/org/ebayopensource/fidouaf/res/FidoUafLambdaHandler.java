@@ -9,11 +9,14 @@ import java.io.OutputStreamWriter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fido.uaf.storage.StorageInterface;
 import org.ebayopensource.fidouaf.res.util.NotaryImpl;
+import org.ebayopensource.fidouaf.res.util.StorageImpl;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -32,23 +35,30 @@ import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.util.IOUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import java.util.Base64;
 
 
 
-public class FidoUafLambdaHandler extends FidoUafResource implements RequestStreamHandler{
+public class FidoUafLambdaHandler implements RequestStreamHandler{
 	// Initialize the Log4j logger.
 	static final Logger logger = LogManager.getLogger(FidoUafLambdaHandler.class);
-
+	protected Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+	private final StorageInterface storage = StorageImpl.getInstance();
+	private final Notary notary = NotaryImpl.getInstance();
+	private final FidoUafResource fidoUafResource;
 	//static final String UserTableName = System.getenv("DB_USER_TABLE_NAME");
 	//static final String DefaultUser = System.getenv("DEFAULT_USER_IDENTITY"); // b342ff9c-9924-4421-9071-32763f907d9b
 	
 	JSONParser parser = new JSONParser();
 
 	public FidoUafLambdaHandler(){
-		//logger.debug("Created FIDO UAF Server Lambda Handler");
+		logger.debug("Created FIDO UAF Server Lambda Handler");
+		fidoUafResource = new FidoUafResource(storage, notary);
+		logger.debug("Created FidoUafResource object with real implementation of notary and storage");
 		//logger.debug("Default user is " + DefaultUser);
 		//logger.debug("User Table name user is " + UserTableName);
 	}
@@ -145,24 +155,24 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 				username = pathParameters.substring(11);
 			}
 			logger.info("Username for registration is " + username);
-			RegistrationRequest[] rr_response = this.getRegisReqPublic(username);
+			RegistrationRequest[] rr_response = fidoUafResource.getRegisReqPublic(username);
 			json_body = gson.toJson(rr_response);
 		}
 		else if (pathParameters.startsWith("regResponse"))
 		{
 			//client - need to send username with resopnse
 			String post_body = event.get("body").toString();
-			RegistrationRecord[] rr_response = processRegResponse(post_body);
+			RegistrationRecord[] rr_response = fidoUafResource.processRegResponse(post_body);
 			json_body = gson.toJson(rr_response);
 		}
 		else if (pathParameters.startsWith("deregRequest"))
 		{
 			String post_body = event.get("body").toString();
-			json_body = deregRequestPublic(post_body);
+			json_body = fidoUafResource.deregRequestPublic(post_body);
 		}
 		else if (pathParameters.startsWith("authRequest"))
 		{
-			json_body = getAuthReq();
+			json_body = fidoUafResource.getAuthReq();
 		}
 		else if (pathParameters.startsWith("authResponse"))
 		{
@@ -170,13 +180,13 @@ public class FidoUafLambdaHandler extends FidoUafResource implements RequestStre
 			logger.info("The auth Response is " + post_body);
 			String post_body_b64 = Base64.getEncoder().encodeToString(post_body.getBytes());
 			logger.info("The B64 encoded auth Response is " + post_body_b64);
-			AuthenticatorRecord[] ar_response = processAuthResponse(post_body);
+			AuthenticatorRecord[] ar_response = fidoUafResource.processAuthResponse(post_body);
 			json_body = gson.toJson(ar_response);
 			
 		}
 		else if (pathParameters.startsWith("uaf/facets"))
 		{
-			json_body = gson.toJson(facets());
+			json_body = gson.toJson(fidoUafResource.facets());
 		}
 		/*
 		DynamoDB dynamoDB = new DynamoDB(ddb);

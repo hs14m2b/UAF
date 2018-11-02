@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.binary.Base64;
+import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.Operation;
@@ -37,6 +38,7 @@ import org.ebayopensource.fido.uaf.msg.Version;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.DuplicateKeyException;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fido.uaf.storage.StorageInterface;
 import org.ebayopensource.fido.uaf.storage.SystemErrorException;
 import org.ebayopensource.fidouaf.RPserver.msg.ReturnUAFAuthenticationRequest;
 import org.ebayopensource.fidouaf.RPserver.msg.ReturnUAFDeregistrationRequest;
@@ -48,7 +50,6 @@ import org.ebayopensource.fidouaf.facets.TrustedFacets;
 import org.ebayopensource.fidouaf.res.util.DeregRequestProcessor;
 import org.ebayopensource.fidouaf.res.util.FetchRequest;
 import org.ebayopensource.fidouaf.res.util.ProcessResponse;
-import org.ebayopensource.fidouaf.res.util.StorageImpl;
 import org.ebayopensource.fidouaf.stats.Dash;
 import org.ebayopensource.fidouaf.stats.Info;
 
@@ -57,8 +58,15 @@ import com.google.gson.GsonBuilder;
 
 public class FidoUafResource {
 
+	private final StorageInterface storage;
+	private final Notary notary;
 	protected Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
+	public FidoUafResource(StorageInterface storage, Notary notary)
+	{
+		this.storage = storage;
+		this.notary = notary;
+	}
 	public String info() {
 		return gson.toJson(new Info());
 	}
@@ -82,7 +90,7 @@ public class FidoUafResource {
 	}
 
 	public Map<String, RegistrationRecord> getDbDump() {
-		return StorageImpl.getInstance().dbDump();
+		return storage.dbDump();
 	}
 
 	public RegistrationRequest[] getRegisReqPublic(String username) {
@@ -93,7 +101,7 @@ public class FidoUafResource {
 
 	private RegistrationRequest[] regReqPublic(String username){
 		RegistrationRequest[] regReq = new RegistrationRequest[1];
-		regReq[0] = new FetchRequest(getAppId(), getAllowedAaids())
+		regReq[0] = new FetchRequest(getAppId(), getAllowedAaids(), notary)
 				.getRegistrationRequest(username);
 		Dash.getInstance().stats.put(Dash.LAST_REG_REQ, regReq);
 		Dash.getInstance().history.add(regReq);
@@ -215,10 +223,10 @@ public class FidoUafResource {
 			Dash.getInstance().history.add(fromJson);
 
 			RegistrationResponse registrationResponse = fromJson[0];
-			result = new ProcessResponse().processRegResponse(registrationResponse);
+			result = new ProcessResponse(notary, storage).processRegResponse(registrationResponse);
 			if (result[0].status.equals("SUCCESS")) {
 				try {
-					StorageImpl.getInstance().store(result);
+					storage.store(result);
 				} catch (DuplicateKeyException e) {
 					result = new RegistrationRecord[1];
 					result[0] = new RegistrationRecord();
@@ -295,7 +303,7 @@ public class FidoUafResource {
 
 	public AuthenticationRequest[] getAuthReqObj() {
 		AuthenticationRequest[] ret = new AuthenticationRequest[1];
-		ret[0] = new FetchRequest(getAppId(), getAllowedAaids())
+		ret[0] = new FetchRequest(getAppId(), getAllowedAaids(), notary)
 				.getAuthenticationRequest();
 		Dash.getInstance().stats.put(Dash.LAST_AUTH_REQ, ret);
 		Dash.getInstance().history.add(ret);
@@ -318,7 +326,7 @@ public class FidoUafResource {
 	protected AuthenticatorRecord[] processAuthResponseObject(AuthenticationResponse[] authResp) {
 		Dash.getInstance().stats.put(Dash.LAST_AUTH_RES, authResp);
 		Dash.getInstance().history.add(authResp);
-		AuthenticatorRecord[] result = new ProcessResponse()
+		AuthenticatorRecord[] result = new ProcessResponse(notary, storage)
 				.processAuthResponse(authResp[0]);
 		System.out.println("Response to authResponse POST is");
 		System.out.println(stringifyAuthenticatorRecordArray(result));

@@ -29,28 +29,33 @@ public class ProcessResponse {
 
 	private static int SERVER_DATA_EXPIRY_IN_MS = 5 * 60 * 1000;
 
-	private Notary _notary = null;
-	private StorageInterface _storage = null;
+	private Notary notary = null;
+	private StorageInterface storage = null;
 	
 	// Gson gson = new Gson ();
 
 	public ProcessResponse(Notary notary, StorageInterface storage, int data_expiry)
 	{
-		this._notary = notary;
-		this._storage = storage;
+		this.notary = notary;
+		this.storage = storage;
 		SERVER_DATA_EXPIRY_IN_MS = data_expiry;
 	}
 	
-	public ProcessResponse() {
-		this._notary = NotaryImpl.getInstance();
-		this._storage = StorageImpl.getInstance();
+	public ProcessResponse(Notary notary, StorageInterface storage)
+	{
+		this.notary = notary;
+		this.storage = storage;
 	}
+//	public ProcessResponse() {
+//		this._notary = NotaryImpl.getInstance();
+//		this._storage = StorageImpl.getInstance();
+//	}
 	public AuthenticatorRecord[] processAuthResponse(AuthenticationResponse resp) {
 		AuthenticatorRecord[] result = null;
 		try {
 			result = new AuthenticationResponseProcessing(
-					SERVER_DATA_EXPIRY_IN_MS, _notary).verify(
-					resp, _storage);
+					SERVER_DATA_EXPIRY_IN_MS, notary).verify(
+					resp, storage);
 		} catch (Exception e) {
 			System.out
 					.println("!!!!!!!!!!!!!!!!!!!..............................."
@@ -66,7 +71,7 @@ public class ProcessResponse {
 		RegistrationRecord[] result = null;
 		try {
 			result = new RegistrationResponseProcessing(
-					SERVER_DATA_EXPIRY_IN_MS, _notary)
+					SERVER_DATA_EXPIRY_IN_MS, notary)
 					.processResponse(resp);
 		} catch (Exception e) {
 			System.out

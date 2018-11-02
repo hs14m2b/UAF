@@ -23,7 +23,7 @@ import org.ebayopensource.stub.fido.uaf.crypto.BCrypt;
 import org.ebayopensource.stub.fido.uaf.crypto.Base64url;
 import org.ebayopensource.stub.fido.uaf.crypto.FidoSigner;
 import org.ebayopensource.stub.fido.uaf.crypto.SHA;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticationResponse;
+import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.stub.fido.uaf.tlv.AlgAndEncodingEnum;
 import org.ebayopensource.stub.fido.uaf.tlv.TagsEnum;
 

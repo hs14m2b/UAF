@@ -20,11 +20,11 @@ import com.google.gson.Gson;
 
 import org.ebayopensource.stub.fido.uaf.crypto.Base64url;
 import org.ebayopensource.stub.fido.uaf.crypto.FidoSigner;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticationRequest;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticationResponse;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticatorSignAssertion;
-import org.ebayopensource.stub.fido.uaf.msg.FinalChallengeParams;
-import org.ebayopensource.stub.fido.uaf.msg.OperationHeader;
+import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
+import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
+import org.ebayopensource.fido.uaf.msg.AuthenticatorSignAssertion;
+import org.ebayopensource.fido.uaf.msg.FinalChallengeParams;
+import org.ebayopensource.fido.uaf.msg.OperationHeader;
 
 import java.security.KeyPair;
 

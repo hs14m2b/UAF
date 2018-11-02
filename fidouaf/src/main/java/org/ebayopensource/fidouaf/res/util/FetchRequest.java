@@ -28,9 +28,9 @@ public class FetchRequest {
 	private String[] aaids;
 	private Notary notary ;
 
-	public FetchRequest(String appId, String[] aaids, Notary notaryStub)
+	public FetchRequest(String appId, String[] aaids, Notary notary)
 	{
-		this.notary = notaryStub;
+		this.notary = notary;
 		this.appId = appId;
 		this.aaids = aaids;
 		
@@ -42,11 +42,11 @@ public class FetchRequest {
 		this.aaids = null;
 	}
 
-	public FetchRequest(String appId, String[] aaids) {
-		this.notary = NotaryImpl.getInstance();
-		this.appId = appId;
-		this.aaids = aaids;
-	}
+//	public FetchRequest(String appId, String[] aaids) {
+//		this.notary = NotaryImpl.getInstance();
+//		this.appId = appId;
+//		this.aaids = aaids;
+//	}
 
 	public RegistrationRequest getRegistrationRequest(String username) {
 		RegistrationRequest request = new RegistrationRequestGeneration(appId,

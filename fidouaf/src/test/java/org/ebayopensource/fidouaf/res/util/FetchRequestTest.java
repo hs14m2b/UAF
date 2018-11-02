@@ -19,7 +19,7 @@ import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@FixMethodOrder(MethodSorters.JVM)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class FetchRequestTest {
 
     private static final Logger logger = LogManager.getLogger(FetchRequestTest.class);

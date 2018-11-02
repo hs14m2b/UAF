@@ -20,7 +20,7 @@ import org.ebayopensource.stub.fido.uaf.client.AuthenticationRequestProcessor;
 import org.ebayopensource.stub.fido.uaf.client.RegistrationRequestProcessor;
 import org.ebayopensource.stub.fido.uaf.crypto.FidoSigner;
 import org.ebayopensource.stub.fido.uaf.crypto.FidoSignerBC;
-import org.ebayopensource.stub.fido.uaf.msg.AuthenticationRequest;
+import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -47,20 +47,22 @@ public class ProcessResponseTest {
 		logger.info("Completed basic test");
 	}
 	
-	@Test
+	//commented this test out for the moment as parallel execution causes problems!
+	//this test is invoked from test_c in any case
+	//@Test
 	public void test_b() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
 		logger.info("Starting process registration response test");
 		FetchRequest _fr = new FetchRequest(TestUtils.getAppId(), TestUtils.getAllowedAaids() ,notary);
 		RegistrationRequest _rr = _fr.getRegistrationRequest(TestUtils.getUserName());
 		String _rrs = gson.toJson(_rr, RegistrationRequest.class);
-		org.ebayopensource.stub.fido.uaf.msg.RegistrationRequest _rrstub = gson.fromJson(_rrs,org.ebayopensource.stub.fido.uaf.msg.RegistrationRequest.class);
+		RegistrationRequest _rrstub = gson.fromJson(_rrs,RegistrationRequest.class);
 		ProcessResponse _pr = new ProcessResponse(notary, storage, 5*60*1000);
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDsA", new org.bouncycastle.jce.provider.BouncyCastleProvider());
         ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256r1");
         keyGen.initialize(ecSpec, new SecureRandom());
         kp = keyGen.generateKeyPair();
 		RegistrationRequestProcessor _rrp = new RegistrationRequestProcessor();
-		org.ebayopensource.stub.fido.uaf.msg.RegistrationResponse _rrspstub =  _rrp.processRequest(_rrstub, kp);
+		RegistrationResponse _rrspstub =  _rrp.processRequest(_rrstub, kp);
 		String _rrsps = gson.toJson(_rrspstub, org.ebayopensource.stub.fido.uaf.msg.RegistrationResponse.class);
 		RegistrationResponse _rrsp = gson.fromJson(_rrsps, RegistrationResponse.class);
 		assertTrue(_rrsp.assertions.length > 0);
@@ -93,24 +95,24 @@ public class ProcessResponseTest {
 			test_b();
 		}
 		FetchRequest _fr = new FetchRequest(TestUtils.getAppId(), TestUtils.getAllowedAaids() ,notary);
-		org.ebayopensource.fido.uaf.msg.AuthenticationRequest _ar = _fr.getAuthenticationRequest();
+		AuthenticationRequest _ar = _fr.getAuthenticationRequest();
 		logger.info("Obtained an authentication request message");
-		String _ars = gson.toJson(_ar, org.ebayopensource.fido.uaf.msg.AuthenticationRequest.class);
+		String _ars = gson.toJson(_ar, AuthenticationRequest.class);
 		logger.info(_ars);
-		org.ebayopensource.stub.fido.uaf.msg.AuthenticationRequest _arstub = gson.fromJson(_ars,org.ebayopensource.stub.fido.uaf.msg.AuthenticationRequest.class);
+		AuthenticationRequest _arstub = gson.fromJson(_ars,AuthenticationRequest.class);
 		logger.info("Cast authentication request message into stub object");
 		org.ebayopensource.stub.fido.uaf.crypto.FidoSigner _fs = new org.ebayopensource.stub.fido.uaf.crypto.FidoSignerBC();
 		AuthenticationRequestProcessor _arp = new AuthenticationRequestProcessor(_fs, kp);
 		logger.info("Created stub authentication request processor object");
 		assertNotNull(_arp); 
-		org.ebayopensource.stub.fido.uaf.msg.AuthenticationResponse _arspstub =  _arp.processRequest(_arstub);
+		AuthenticationResponse _arspstub =  _arp.processRequest(_arstub);
 		logger.info("Obtained authentication response stub object");
 		assertTrue(_arspstub.assertions.length > 0);
 		logger.info(_arspstub.assertions[0].assertion);
 		logger.info(_arspstub.assertions[0].assertionScheme);
-		String _arsps =gson.toJson(_arspstub, org.ebayopensource.stub.fido.uaf.msg.AuthenticationResponse.class); 
+		String _arsps =gson.toJson(_arspstub, AuthenticationResponse.class); 
 		logger.info(_arsps);
-		AuthenticationResponse _arsp = gson.fromJson(_arsps,org.ebayopensource.fido.uaf.msg.AuthenticationResponse.class);
+		AuthenticationResponse _arsp = gson.fromJson(_arsps,AuthenticationResponse.class);
 		logger.info("Created real authentication response object from stringified stub object");
 		ProcessResponse _pr = new ProcessResponse(notary, storage, 5*60*1000);
 		logger.info("Processing authentication response - expecting SUCCESS");
