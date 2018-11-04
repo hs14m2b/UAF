@@ -3,6 +3,7 @@ package org.ebayopensource.stub.fido.uaf.crypto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.ebayopensource.stub.fido.uaf.client.AttestCert;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -23,8 +24,8 @@ public class FixedCertFidoAttestationSigner implements FidoAttestationSigner {
 	
     public byte[] signWithAttestationCert(byte[] dataForSigning) {
         try {
-            PrivateKey priv = kp.getPrivate();
-                    //KeyCodec.getPrivKey(Base64url.decode(AttestCert.priv));
+            PrivateKey priv = //kp.getPrivate();
+            KeyCodec.getPrivKey(Base64url.decode(AttestCert.priv));
 
             //Log.i(TAG, " : dataForSigning : "
             //        + Base64url.encodeToString(dataForSigning));
@@ -34,7 +35,7 @@ public class FixedCertFidoAttestationSigner implements FidoAttestationSigner {
 	          //byte[] signatureGen = NamedCurve.sign(SHA.sha(dataForSigning, "SHA-256"),priv);
 
             boolean verify = NamedCurve.verify(
-                    KeyCodec.getPubKeyAsRawBytes(kp.getPublic()),
+                    KeyCodec.getBCKeyAsRawBytes((ECPublicKey) KeyCodec.getPubKey(Base64url.decode(AttestCert.pubCert))),
                     SHA.sha(dataForSigning, "SHA-256"),
                     Asn1.decodeToBigIntegerArray(Asn1.getEncoded(signatureGen)));
 	          //boolean verify = NamedCurve.verify(kp.getPublic(),  SHA.sha(dataForSigning, "SHA-256"),  signatureGen);

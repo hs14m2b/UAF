@@ -61,7 +61,7 @@ public class KeyCodec {
             NoSuchAlgorithmException, NoSuchProviderException {
         //ECGenParameterSpec ecGenSpec = new ECGenParameterSpec("prime192v1");
         ECGenParameterSpec ecGenSpec = new ECGenParameterSpec("secp256r1");
-        KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA");//, "SC");
+        KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", new org.bouncycastle.jce.provider.BouncyCastleProvider());//, "SC");
         g.initialize(ecGenSpec, new SecureRandom());
         return g.generateKeyPair();
     }
@@ -167,19 +167,21 @@ public class KeyCodec {
     }
 
     public static PublicKey getPubKey(byte[] bytes) throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", "SC");
-        return kf.generatePublic(new X509EncodedKeySpec(bytes));
+        //KeyFactory kf = KeyFactory.getInstance("ECDSA", "SC");
+    	KeyFactory kf = KeyFactory.getInstance("ECDSA", new org.bouncycastle.jce.provider.BouncyCastleProvider());
+    	return kf.generatePublic(new X509EncodedKeySpec(bytes));
     }
 
     public static PrivateKey getPrivKey(byte[] bytes) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", "SC");
+        //KeyFactory kf = KeyFactory.getInstance("ECDSA", "SC");
+    	KeyFactory kf = KeyFactory.getInstance("ECDSA", new org.bouncycastle.jce.provider.BouncyCastleProvider());
         return kf.generatePrivate(new PKCS8EncodedKeySpec(bytes));
     }
 
     public static KeyPair generate() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         SecureRandom random = new SecureRandom();
         ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
-        KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA");
+        KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", new org.bouncycastle.jce.provider.BouncyCastleProvider());
         g.initialize(ecSpec, random);
         return g.generateKeyPair();
     }

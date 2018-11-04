@@ -119,9 +119,9 @@ public class RegAssertionBuilder {
 		byteout.write(value);
 		
 		byteout.write(encodeInt(TagsEnum.TAG_ATTESTATION_CERT.id));
-		java.security.cert.X509Certificate _cert = X509.generateV3Cert(keyPair);
-		value = _cert.getEncoded();
-		//value = Base64url.decode(AttestCert.base64DERCert);
+		//java.security.cert.X509Certificate _cert = X509.generateV3Cert(keyPair);
+		//value = _cert.getEncoded();
+		value = Base64url.decode(AttestCert.base64DERCert);
 		length = value.length;
 		byteout.write(encodeInt(length));
 		byteout.write(value);
