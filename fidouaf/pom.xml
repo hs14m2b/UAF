@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.ebayopensource</groupId>
 	<artifactId>fidouaf</artifactId>
-	<version>0.0.11-SNAPSHOT</version>
+	<version>0.0.12-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>
@@ -56,15 +56,15 @@
 	      </dependency>
 	    </dependencies>
       </plugin>
-       <plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M1</version>
         <configuration>
-          <systemPropertyVariables>
-              <PropertyName1>PropertyValue1</PropertyName1>                                                          
-              <PropertyName2>PropertyValue2</PropertyName2>
-          </systemPropertyVariables>
           <environmentVariables>
+          	<DDB_REGION>eu-west-2</DDB_REGION>
+          	<REGISTRATIONS_TABLE_NAME>fidoregistrations</REGISTRATIONS_TABLE_NAME>
+          	<SIGNATURES_TABLE_NAME>fidosignatures</SIGNATURES_TABLE_NAME>
           	<FIDO_EXPIRY_MSECS>300000</FIDO_EXPIRY_MSECS>
           	<SECRET_KEY_NAME>test/HMACNotarySecret</SECRET_KEY_NAME>
             <DB_USER_TABLE_NAME>users</DB_USER_TABLE_NAME>
@@ -72,7 +72,7 @@
           </environmentVariables>
         </configuration>
       </plugin>
-     </plugins>
+    </plugins>
   </build>
 
 	<dependencyManagement>

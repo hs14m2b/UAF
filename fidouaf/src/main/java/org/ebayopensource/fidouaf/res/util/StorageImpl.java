@@ -25,6 +25,7 @@ import org.ebayopensource.fido.uaf.storage.SystemErrorException;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
@@ -42,14 +43,24 @@ import com.amazonaws.services.dynamodbv2.document.spec.PutItemSpec;
 public class StorageImpl implements StorageInterface {
 
 	private static StorageImpl instance = new StorageImpl();
+	private String DDB_REGION;
+	private AmazonDynamoDB ddb;
+	private DynamoDB dynamoDB;
+	private Table registrationsTable;
 	private Map<String, RegistrationRecord> db = new HashMap<String, RegistrationRecord>();
 	private Map<String, String> db_names = new HashMap<String, String>();
+	private static String REGISTRATIONS_TABLE_NAME;
 
 	protected Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
 	private StorageImpl() {
 		// Init
 		try {
+			DDB_REGION = System.getenv("DDB_REGION");
+			REGISTRATIONS_TABLE_NAME = System.getenv("REGISTRATIONS_TABLE_NAME");
+			ddb = AmazonDynamoDBClient.builder().withRegion(DDB_REGION).build();
+			dynamoDB = new DynamoDB(ddb);
+			registrationsTable = dynamoDB.getTable(REGISTRATIONS_TABLE_NAME);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -93,9 +104,6 @@ public class StorageImpl implements StorageInterface {
 	private void storeAWS(RegistrationRecord[] records)
 	{
 		System.out.println("Entered storeAWS to store ... " + records.length + " items");
-		final AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
-		DynamoDB dynamoDB = new DynamoDB(ddb);
-		Table registrationsTable = dynamoDB.getTable("fidoregistrations");
 		//registrationsTable
 		if (records != null && records.length > 0) {
 			for (int i = 0; i < records.length; i++) {
@@ -129,9 +137,6 @@ public class StorageImpl implements StorageInterface {
 	private RegistrationRecord readRegistrationRecordAWS(String key)
 	{
 		System.out.println("Entered readRegistrationRecordAWS with key " + key);
-		final AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
-		DynamoDB dynamoDB = new DynamoDB(ddb);
-		Table registrationsTable = dynamoDB.getTable("fidoregistrations");
 		GetItemSpec spec = new GetItemSpec().withPrimaryKey("authenticator_string", key);
         try {
     		System.out.println("Attempting to read the item with key... " + key);
@@ -162,9 +167,6 @@ public class StorageImpl implements StorageInterface {
 
 	private void deleteRegistrationRecordAWS(String key)
 	{
-		final AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
-		DynamoDB dynamoDB = new DynamoDB(ddb);
-		Table registrationsTable = dynamoDB.getTable("fidoregistrations");
 		DeleteItemSpec spec = new DeleteItemSpec().withPrimaryKey("authenticator_string", key);
         try {
         	//logger.log("Attempting to read the item...");
