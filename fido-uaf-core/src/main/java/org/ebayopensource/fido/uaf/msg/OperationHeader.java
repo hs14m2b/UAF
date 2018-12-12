@@ -21,5 +21,5 @@ public class OperationHeader {
 	public Operation op;
 	public String appID;
 	public String serverData;
-	//public Extension[] exts;
+	public Extension[] exts;
 }

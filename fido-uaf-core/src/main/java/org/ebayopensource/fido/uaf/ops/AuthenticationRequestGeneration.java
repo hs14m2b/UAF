@@ -20,6 +20,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.ebayopensource.fido.uaf.crypto.BCrypt;
 import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
+import org.ebayopensource.fido.uaf.msg.Extension;
 import org.ebayopensource.fido.uaf.msg.MatchCriteria;
 import org.ebayopensource.fido.uaf.msg.Operation;
 import org.ebayopensource.fido.uaf.msg.OperationHeader;
@@ -29,6 +30,8 @@ import org.ebayopensource.fido.uaf.msg.Version;
 public class AuthenticationRequestGeneration {
 
 	private String appId = RegistrationRequestGeneration.APP_ID;
+	private static final String OP_HEADER_EXT_UVM = "fido.uaf.uvm";
+	private static final long[] ACCEPTED_USER_VERIFICATIONS = new long[] {1027, 1041, 1281};
 	private String[] acceptedAaids = null;
 
 	public AuthenticationRequestGeneration() {
@@ -52,6 +55,10 @@ public class AuthenticationRequestGeneration {
 		authRequest.header.op = Operation.Auth;
 		authRequest.header.appID = appId;
 		authRequest.header.upv = new Version(1, 0);
+		Extension ext1 = new Extension();
+		ext1.id = OP_HEADER_EXT_UVM;
+		ext1.fail_if_unknown = true;
+		authRequest.header.exts = new Extension[] {ext1};
 
 		authRequest.policy = constructAuthenticationPolicy();
 
@@ -78,15 +85,25 @@ public class AuthenticationRequestGeneration {
 			return null;
 		}
 		Policy p = new Policy();
-		MatchCriteria[][] accepted = new MatchCriteria[acceptedAaids.length][1];
+		MatchCriteria[][] accepted = new MatchCriteria[ACCEPTED_USER_VERIFICATIONS.length][1];
 		for (int i = 0; i < accepted.length; i++) {
+			MatchCriteria[] a = new MatchCriteria[1];
+			MatchCriteria matchCriteria = new MatchCriteria();
+			matchCriteria.assertionSchemes = new String[] {"UAFV1TLV"};
+			matchCriteria.userVerification = ACCEPTED_USER_VERIFICATIONS[i];
+			matchCriteria.authenticationAlgorithms = new int[] {1,2,5,6};
+			matchCriteria.keyProtection = 15;
+			a[0] = matchCriteria;
+			accepted[i] = a;
+		}
+		/*for (int i = 0; i < accepted.length; i++) {
 			MatchCriteria[] a = new MatchCriteria[1];
 			MatchCriteria matchCriteria = new MatchCriteria();
 			matchCriteria.aaid = new String[1];
 			matchCriteria.aaid[0] = acceptedAaids[i];
 			a[0] = matchCriteria;
 			accepted[i] = a;
-		}
+		}*/
 		p.accepted = accepted;
 		return p;
 	}

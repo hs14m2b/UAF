@@ -170,10 +170,46 @@ public class RegAssertionBuilder {
 		length = value.length;
 		byteout.write(encodeInt(length));
 		byteout.write(value);
+		
+		//add the extension here
+		byteout.write(encodeInt(TagsEnum.TAG_EXTENSION.id));
+		value = getUVMExtension();
+		length = value.length;
+		byteout.write(encodeInt(length));
+		byteout.write(value);
 
 		return byteout.toByteArray();
 	}
+	
+	private byte[] getUVMExtension() throws IOException
+	{
+		ByteArrayOutputStream byteout = new ByteArrayOutputStream();
+		byte[] value = null;
+		int length = 0;
+		byteout.write(encodeInt(TagsEnum.TAG_EXTENSION_ID.id));
+		value = "fido.uaf.uvm".getBytes("utf8"); //check that UTF-8
+		length = value.length;
+		byteout.write(encodeInt(length));
+		byteout.write(value);
+		byteout.write(encodeInt(TagsEnum.TAG_EXTENSION_DATA.id));
+		//HARDCODE these values for testing
+		long userVerificationMethod = 1027;
+	    int keyProtection = 15;
+	    int matcherProtection = 1;
+	    length = Long.BYTES + 4;
+		byteout.write(encodeInt(length));
+		byteout.write(longToBytes(userVerificationMethod));
+		byteout.write(encodeInt(keyProtection));
+		byteout.write(encodeInt(matcherProtection));
+		return byteout.toByteArray();
 
+	}
+
+	private byte[] longToBytes(long x) {
+	    ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+	    buffer.putLong(x);
+	    return buffer.array();
+	}
 	private byte[] makeAssertionInfo() {
 		//2 bytes - vendor; 1 byte Authentication Mode; 2 bytes Sig Alg; 2 bytes Pub Key Alg
 		ByteBuffer bb = ByteBuffer.allocate(7);

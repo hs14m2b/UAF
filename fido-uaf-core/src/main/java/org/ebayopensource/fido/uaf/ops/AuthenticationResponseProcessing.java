@@ -19,6 +19,7 @@ package org.ebayopensource.fido.uaf.ops;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -46,14 +47,17 @@ import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
 import org.ebayopensource.fido.uaf.storage.StorageInterface;
 import org.ebayopensource.fido.uaf.tlv.AlgAndEncodingEnum;
+import org.ebayopensource.fido.uaf.tlv.ByteInputStream;
 import org.ebayopensource.fido.uaf.tlv.Tag;
 import org.ebayopensource.fido.uaf.tlv.Tags;
 import org.ebayopensource.fido.uaf.tlv.TagsEnum;
 import org.ebayopensource.fido.uaf.tlv.TlvAssertionParser;
+import org.ebayopensource.fido.uaf.tlv.UnsignedUtil;
 
 public class AuthenticationResponseProcessing {
 
 	private Logger logger = Logger.getLogger(this.getClass().getName());
+	private static final long[] ACCEPTED_USER_VERIFICATIONS = new long[] {1027, 1041, 1281};
 	private long serverDataExpiryInMs;
 	private Notary notary;
 	private FinalChallengeParamsValidator finalChallengeParamsValidator;
@@ -131,6 +135,7 @@ public class AuthenticationResponseProcessing {
 			authRecord.username = registrationRecord.username;
 			authRecord.deviceId = registrationRecord.deviceId;
 			authRecord.status = "SUCCESS";
+			verifyUVMExtension(tags,authRecord);
 			return authRecord;
 		} catch (IOException e) {
 			logger.log(Level.INFO, "Fail to parse assertion: "
@@ -138,6 +143,71 @@ public class AuthenticationResponseProcessing {
 			authRecord.status = "FAILED_ASSERTION_VERIFICATION";
 			return authRecord;
 		}
+	}
+
+	private void verifyUVMExtension(Tags tags, AuthenticatorRecord record)
+	{
+		System.out.println("Entered verifyUVMExtension");
+		if (tags.getTags().containsKey(TagsEnum.TAG_EXTENSION.id))
+		{
+			byte[] UVMExtenstionTagValue = tags.getTags().get(TagsEnum.TAG_EXTENSION.id).value;
+			logger.log(Level.INFO, "Retrieved the value for the EXTENSION tag");
+			TlvAssertionParser parser = new TlvAssertionParser();
+			logger.log(Level.INFO, "Created Tlv Parser to parse the EXTENSION tag data");
+			try {
+				Tags id_tags = parser
+						.parse(UVMExtenstionTagValue);
+				logger.log(Level.INFO, "Successfully parsed the EXTENSION tag data");
+				//check that there is an ID tag
+				Tag id_tag = id_tags.getTags().get(TagsEnum.TAG_EXTENSION_ID.id);
+				logger.log(Level.INFO, "Successfully got the EXTENSION_ID tag");
+				Tag data_tag = id_tags.getTags().get(TagsEnum.TAG_EXTENSION_DATA.id);
+				logger.log(Level.INFO, "Successfully got the EXTENSION_DATA tag");
+				String extension_id = new String(id_tag.value);
+				logger.log(Level.INFO, "Successfully got the extension id " + extension_id);
+				if (!extension_id.equals("fido.uaf.uvm"))
+				{
+					logger.log(Level.WARNING, "Extension id does not match expected version of fido.uaf.uvm");
+					logger.log(Level.WARNING, "TODO - THROW EXCEPTION OR OTHERWISE");
+				}
+				else
+				{
+					ByteInputStream bis_ext_data = new ByteInputStream(data_tag.value);
+					long userVerificationMethod = ByteBuffer.wrap(bis_ext_data.read(Long.BYTES)).getLong();
+					logger.log(Level.INFO, "userVerificationMethod is " + userVerificationMethod);
+				    int keyProtection = UnsignedUtil.read_UAFV1_UINT16(bis_ext_data);
+					logger.log(Level.INFO, "keyProtection is " + keyProtection);
+				    int matcherProtection = UnsignedUtil.read_UAFV1_UINT16(bis_ext_data);
+					logger.log(Level.INFO, "matcherProtection is " + matcherProtection);
+					//check the userVerificationMethod
+					boolean verificationMethodOK = false;
+					for (int i = 0; i < ACCEPTED_USER_VERIFICATIONS.length; i++)
+					{
+						if (userVerificationMethod == ACCEPTED_USER_VERIFICATIONS[i])
+						{
+							verificationMethodOK = true;
+							break;
+						}
+					}
+					if (!verificationMethodOK)
+					{
+						logger.log(Level.WARNING, "User Verification Method does not match accepted value");
+						record.status = "UVM_EXTENSION_UVM_VALUE_INVALID";
+					}
+					
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.log(Level.SEVERE, "Caught error in verifyUVMExtension " + ex.getMessage());
+				record.status = "UVM_EXTENSION_PROCESS_ERROR";
+			}
+		}
+		else
+		{
+			logger.log(Level.WARNING, "Tags do not contain an EXTENSION");
+		}
+		logger.log(Level.INFO, "Exiting verifyUVMExtension");
 	}
 
 	private AlgAndEncodingEnum getAlgAndEncoding(Tag info) {

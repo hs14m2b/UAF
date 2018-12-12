@@ -46,7 +46,6 @@ public class RegistrationRequestProcessor {
 		response.header.appID = regRequest.header.appID;
 		response.header.op = regRequest.header.op;
 		response.header.upv = regRequest.header.upv;
-
 		FinalChallengeParams fcParams = new FinalChallengeParams();
 		fcParams.appID = regRequest.header.appID;
 		//Preferences.setSettingsParam("appID", fcParams.appID);

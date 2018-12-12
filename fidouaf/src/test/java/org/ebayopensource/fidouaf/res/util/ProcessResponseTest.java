@@ -82,7 +82,9 @@ public class ProcessResponseTest {
 		}
 		assertNotNull(_rrec[0]);
 		assertTrue(_rrec[0].status.equalsIgnoreCase("SUCCESS"));
+		assertTrue(_rrec[0].attestVerifiedStatus.equalsIgnoreCase("VALID"));
 		logger.info(_rrec[0].status);
+		logger.info(_rrec[0].attestVerifiedStatus);
 		logger.info("Completed process registration response test");
 	}
 

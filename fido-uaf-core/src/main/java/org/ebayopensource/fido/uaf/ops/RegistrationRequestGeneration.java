@@ -16,6 +16,8 @@
 
 package org.ebayopensource.fido.uaf.ops;
 
+
+import org.ebayopensource.fido.uaf.msg.Extension;
 import org.apache.commons.codec.binary.Base64;
 import org.ebayopensource.fido.uaf.crypto.BCrypt;
 import org.ebayopensource.fido.uaf.crypto.Notary;
@@ -29,6 +31,9 @@ import org.ebayopensource.fido.uaf.msg.Version;
 public class RegistrationRequestGeneration {
 
 	public static final String APP_ID = "https://uaf.ebay.com/uaf/facets";
+	private static final String OP_HEADER_EXT_UVM = "fido.uaf.uvm";
+	private static final long[] ACCEPTED_USER_VERIFICATIONS = new long[] {1027, 1041, 1281};
+	private static final int KEY_PROTECTION = 15;
 	private String appId = APP_ID;
 	private String[] acceptedAaids;
 
@@ -50,7 +55,18 @@ public class RegistrationRequestGeneration {
 			return null;
 		}
 		Policy p = new Policy();
-		MatchCriteria[][] accepted = new MatchCriteria[acceptedAaids.length][1];
+		MatchCriteria[][] accepted = new MatchCriteria[ACCEPTED_USER_VERIFICATIONS.length][1];
+		for (int i = 0; i < accepted.length; i++) {
+			MatchCriteria[] a = new MatchCriteria[1];
+			MatchCriteria matchCriteria = new MatchCriteria();
+			matchCriteria.assertionSchemes = new String[] {"UAFV1TLV"};
+			matchCriteria.userVerification = ACCEPTED_USER_VERIFICATIONS[i];
+			matchCriteria.authenticationAlgorithms = new int[] {1,2,5,6};
+			matchCriteria.keyProtection = KEY_PROTECTION;
+			a[0] = matchCriteria;
+			accepted[i] = a;
+		}
+		/* MatchCriteria[][] accepted = new MatchCriteria[acceptedAaids.length][1];
 		for (int i = 0; i < accepted.length; i++) {
 			MatchCriteria[] a = new MatchCriteria[1];
 			MatchCriteria matchCriteria = new MatchCriteria();
@@ -58,7 +74,7 @@ public class RegistrationRequestGeneration {
 			matchCriteria.aaid[0] = acceptedAaids[i];
 			a[0] = matchCriteria;
 			accepted[i] = a;
-		}
+		}*/
 		p.accepted = accepted;
 		return p;
 	}
@@ -94,6 +110,11 @@ public class RegistrationRequestGeneration {
 		regRequest.header.op = Operation.Reg;
 		regRequest.header.appID = appId;
 		regRequest.header.upv = new Version(1, 0);
+		Extension ext1 = new Extension();
+		ext1.id = OP_HEADER_EXT_UVM;
+		ext1.fail_if_unknown = true;
+		regRequest.header.exts = new Extension[] {ext1};
+		//add in the extension here
 		regRequest.challenge = challenge;
 		regRequest.policy = constructAuthenticationPolicy();
 		regRequest.username = username;
