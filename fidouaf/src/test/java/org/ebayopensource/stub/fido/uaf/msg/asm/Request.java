@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.ebayopensource.fido.uaf.msg;
+package org.ebayopensource.stub.fido.uaf.msg.asm;
 
-public class OperationHeader {
-	public Version upv;
-	public Operation op;
-	public String appID;
-	public String serverData;
-	public Extension[] exts;
+public enum Request {
+	    GetInfo,
+	    Register,
+	    Authenticate,
+	    Deregister,
+	    GetRegistrations,
+	    OpenSettings
 }
+

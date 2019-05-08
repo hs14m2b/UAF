@@ -16,6 +16,7 @@
 
 package org.ebayopensource.fidouaf.res.util;
 
+import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fido.uaf.ops.AuthenticationRequestGeneration;
@@ -25,28 +26,38 @@ public class FetchRequest {
 
 	private String appId;
 	private String[] aaids;
+	private Notary notary ;
 
+	public FetchRequest(String appId, String[] aaids, Notary notary)
+	{
+		this.notary = notary;
+		this.appId = appId;
+		this.aaids = aaids;
+		
+	}
+	
 	public FetchRequest() {
+		this.notary = NotaryImpl.getInstance();
 		this.appId = "";
 		this.aaids = null;
 	}
 
-	public FetchRequest(String appId, String[] aaids) {
-		this.appId = appId;
-		this.aaids = aaids;
-	}
+//	public FetchRequest(String appId, String[] aaids) {
+//		this.notary = NotaryImpl.getInstance();
+//		this.appId = appId;
+//		this.aaids = aaids;
+//	}
 
 	public RegistrationRequest getRegistrationRequest(String username) {
 		RegistrationRequest request = new RegistrationRequestGeneration(appId,
 				aaids).createRegistrationRequest(username,
-				NotaryImpl.getInstance());
+						this.notary);
 		return request;
 	}
 
 	public AuthenticationRequest getAuthenticationRequest() {
 		AuthenticationRequest authReq = new AuthenticationRequestGeneration(
-				appId, aaids).createAuthenticationRequest(NotaryImpl
-				.getInstance());
+				appId, aaids).createAuthenticationRequest(this.notary);
 		return authReq;
 	}
 }

@@ -16,6 +16,7 @@
 
 package org.ebayopensource.fido.uaf.tlv;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import org.apache.commons.codec.binary.Base64;
@@ -27,6 +28,12 @@ public class TlvAssertionParser {
 				Base64.decodeBase64(base64OfRegResponse));
 		boolean isReg = false;
 		return parse(bytes, isReg);
+	}
+	
+	public Tags parse(byte[] bytes) throws IOException {
+		ByteInputStream bis = new ByteInputStream(bytes);
+		boolean isReg = false;
+		return parse(bis, isReg);
 	}
 
 	public Tags parse(ByteInputStream bytes, boolean isReg) throws IOException {
@@ -58,6 +65,18 @@ public class TlvAssertionParser {
 					ret.add(t);
 					addTagAndValue(bytes, ret, t);
 					addSubTags(isReg, ret, t);
+				} else if (t.id == TagsEnum.TAG_EXTENSION.id) {
+					//ret.add(t);
+					addTagAndValue(bytes, ret, t);
+					//addSubTags(isReg, ret, t);
+				} else if (t.id == TagsEnum.TAG_EXTENSION_ID.id) {
+					//ret.add(t);
+					addTagAndValue(bytes, ret, t);
+					//addSubTags(isReg, ret, t);
+				} else if (t.id == TagsEnum.TAG_EXTENSION_DATA.id) {
+					//ret.add(t);
+					addTagAndValue(bytes, ret, t);
+					//addSubTags(isReg, ret, t);
 				} else if (t.id == TagsEnum.TAG_AAID.id) {
 					addTagAndValue(bytes, ret, t);
 				} else if (t.id == TagsEnum.TAG_ASSERTION_INFO.id) {

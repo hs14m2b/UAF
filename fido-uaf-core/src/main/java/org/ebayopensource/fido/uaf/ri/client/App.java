@@ -16,6 +16,7 @@
 
 package org.ebayopensource.fido.uaf.ri.client;
 
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.ebayopensource.fido.uaf.msg.AuthenticationRequest;
@@ -166,6 +167,16 @@ public class App {
 		}
 
 		public String getUsername(String serverDataString) {
+			return null;
+		}
+
+		public void deleteRegistrationRecord(String key) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public Map<String, RegistrationRecord> dbDump() {
+			// TODO Auto-generated method stub
 			return null;
 		}
 	}

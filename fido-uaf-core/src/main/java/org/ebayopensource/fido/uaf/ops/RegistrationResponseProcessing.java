@@ -17,13 +17,17 @@
 package org.ebayopensource.fido.uaf.ops;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.asn1.eac.UnsignedInteger;
 import org.ebayopensource.fido.uaf.crypto.CertificateValidator;
 import org.ebayopensource.fido.uaf.crypto.CertificateValidatorImpl;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidator;
+import org.ebayopensource.fido.uaf.crypto.FinalChallengeParamsValidatorImpl;
 import org.ebayopensource.fido.uaf.crypto.Notary;
 import org.ebayopensource.fido.uaf.msg.AuthenticatorRegistrationAssertion;
 import org.ebayopensource.fido.uaf.msg.FinalChallengeParams;
@@ -31,6 +35,7 @@ import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
 import org.ebayopensource.fido.uaf.msg.Version;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fido.uaf.tlv.ByteInputStream;
 import org.ebayopensource.fido.uaf.tlv.Tag;
 import org.ebayopensource.fido.uaf.tlv.Tags;
 import org.ebayopensource.fido.uaf.tlv.TagsEnum;
@@ -42,13 +47,16 @@ import com.google.gson.Gson;
 public class RegistrationResponseProcessing {
 
 	private Logger logger = Logger.getLogger(this.getClass().getName());
+	private static final long[] ACCEPTED_USER_VERIFICATIONS = new long[] {1027, 1041, 1281};
 	private long serverDataExpiryInMs = 5 * 60 * 1000;
 	private Notary notary = null;
 	private Gson gson = new Gson();
 	private CertificateValidator certificateValidator;
+	private FinalChallengeParamsValidator finalChallengeParamsValidator;
 
 	public RegistrationResponseProcessing() {
 		this.certificateValidator = new CertificateValidatorImpl();
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
 	public RegistrationResponseProcessing(long serverDataExpiryInMs,
@@ -56,6 +64,7 @@ public class RegistrationResponseProcessing {
 		this.serverDataExpiryInMs = serverDataExpiryInMs;
 		this.notary = notary;
 		this.certificateValidator = new CertificateValidatorImpl();
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
 	public RegistrationResponseProcessing(long serverDataExpiryInMs,
@@ -63,8 +72,25 @@ public class RegistrationResponseProcessing {
 		this.serverDataExpiryInMs = serverDataExpiryInMs;
 		this.notary = notary;
 		this.certificateValidator = certificateValidator;
+		this.finalChallengeParamsValidator = new FinalChallengeParamsValidatorImpl();
 	}
 
+	public RegistrationResponseProcessing(long serverDataExpiryInMs,
+			Notary notary, FinalChallengeParamsValidator finalChallengeParamsValidator) {
+		this.serverDataExpiryInMs = serverDataExpiryInMs;
+		this.notary = notary;
+		this.certificateValidator = new CertificateValidatorImpl();
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
+	}
+
+	public RegistrationResponseProcessing(long serverDataExpiryInMs,
+			Notary notary, FinalChallengeParamsValidator finalChallengeParamsValidator,
+			CertificateValidator certificateValidator) {
+		this.serverDataExpiryInMs = serverDataExpiryInMs;
+		this.notary = notary;
+		this.certificateValidator = certificateValidator;
+		this.finalChallengeParamsValidator = finalChallengeParamsValidator;
+	}
 	public RegistrationRecord[] processResponse(RegistrationResponse response)
 			throws Exception {
 		checkAssertions(response);
@@ -97,7 +123,7 @@ public class RegistrationResponseProcessing {
 			} catch (Exception e) {
 				record.attestVerifiedStatus = "NOT_VERIFIED";
 			}
-
+			verifyUVMExtension(tags,record);
 			AuthenticatorRecord authRecord = new AuthenticatorRecord();
 			authRecord.AAID = new String(tags.getTags().get(
 					TagsEnum.TAG_AAID.id).value);
@@ -149,6 +175,70 @@ public class RegistrationResponseProcessing {
 		} else {
 			record.attestVerifiedStatus = "NOT_VERIFIED";
 		}
+	}
+	private void verifyUVMExtension(Tags tags, RegistrationRecord record)
+	{
+		System.out.println("Entered verifyUVMExtension");
+		if (tags.getTags().containsKey(TagsEnum.TAG_EXTENSION.id))
+		{
+			byte[] UVMExtenstionTagValue = tags.getTags().get(TagsEnum.TAG_EXTENSION.id).value;
+			logger.log(Level.INFO, "Retrieved the value for the EXTENSION tag");
+			TlvAssertionParser parser = new TlvAssertionParser();
+			logger.log(Level.INFO, "Created Tlv Parser to parse the EXTENSION tag data");
+			try {
+				Tags id_tags = parser
+						.parse(UVMExtenstionTagValue);
+				logger.log(Level.INFO, "Successfully parsed the EXTENSION tag data");
+				//check that there is an ID tag
+				Tag id_tag = id_tags.getTags().get(TagsEnum.TAG_EXTENSION_ID.id);
+				logger.log(Level.INFO, "Successfully got the EXTENSION_ID tag");
+				Tag data_tag = id_tags.getTags().get(TagsEnum.TAG_EXTENSION_DATA.id);
+				logger.log(Level.INFO, "Successfully got the EXTENSION_DATA tag");
+				String extension_id = new String(id_tag.value);
+				logger.log(Level.INFO, "Successfully got the extension id " + extension_id);
+				if (!extension_id.equals("fido.uaf.uvm"))
+				{
+					logger.log(Level.WARNING, "Extension id does not match expected version of fido.uaf.uvm");
+					logger.log(Level.WARNING, "TODO - THROW EXCEPTION OR OTHERWISE");
+				}
+				else
+				{
+					ByteInputStream bis_ext_data = new ByteInputStream(data_tag.value);
+					long userVerificationMethod = ByteBuffer.wrap(bis_ext_data.read(Long.BYTES)).getLong();
+					logger.log(Level.INFO, "userVerificationMethod is " + userVerificationMethod);
+				    int keyProtection = UnsignedUtil.read_UAFV1_UINT16(bis_ext_data);
+					logger.log(Level.INFO, "keyProtection is " + keyProtection);
+				    int matcherProtection = UnsignedUtil.read_UAFV1_UINT16(bis_ext_data);
+					logger.log(Level.INFO, "matcherProtection is " + matcherProtection);
+					//check the userVerificationMethod
+					boolean verificationMethodOK = false;
+					for (int i = 0; i < ACCEPTED_USER_VERIFICATIONS.length; i++)
+					{
+						if (userVerificationMethod == ACCEPTED_USER_VERIFICATIONS[i])
+						{
+							verificationMethodOK = true;
+							break;
+						}
+					}
+					if (!verificationMethodOK)
+					{
+						logger.log(Level.WARNING, "User Verification Method does not match accepted value");
+						record.attestVerifiedStatus = "NOT_VERIFIED";
+					}
+					
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.log(Level.SEVERE, "Caught error in verifyUVMExtension " + ex.getMessage());
+				record.attestVerifiedStatus = "NOT_VERIFIED";
+			}
+		}
+		else
+		{
+			logger.log(Level.WARNING, "Tags do not contain an EXTENSION");
+		}
+		logger.log(Level.INFO, "Exiting verifyUVMExtension");
 	}
 
 	private String getAuthenticatorVersion(Tags tags) {
@@ -248,8 +338,12 @@ public class RegistrationResponseProcessing {
 		}
 	}
 
-	private void checkFcp(FinalChallengeParams fcp) {
-		// TODO Auto-generated method stub
+	private void checkFcp(FinalChallengeParams fcp) throws Exception {
+		if (finalChallengeParamsValidator.validate(fcp)) {
+			return;
+		} else {
+			throw new Exception("Invalid Final Challenge Parameters");
+		}
 
 	}
 

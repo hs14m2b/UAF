@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.ebayopensource.fido.uaf.msg;
+package org.ebayopensource.stub.fido.uaf.crypto;
 
-public class OperationHeader {
-	public Version upv;
-	public Operation op;
-	public String appID;
-	public String serverData;
-	public Extension[] exts;
+public class Utils {
+	
+    public static byte[] copyOf(byte[] in, int length) {
+        byte[] out = new byte[length];
+        System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
+        return out;
+    }
+
 }

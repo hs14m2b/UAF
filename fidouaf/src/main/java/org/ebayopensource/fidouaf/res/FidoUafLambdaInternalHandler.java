@@ -14,7 +14,9 @@ import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
 import org.ebayopensource.fido.uaf.storage.RegistrationRecord;
+import org.ebayopensource.fido.uaf.storage.StorageInterface;
 import org.ebayopensource.fidouaf.res.util.NotaryImpl;
+import org.ebayopensource.fidouaf.res.util.StorageImpl;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -29,12 +31,19 @@ import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.util.IOUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 //import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import java.util.Base64;
 
-public class FidoUafLambdaInternalHandler extends FidoUafResource implements RequestStreamHandler{
+public class FidoUafLambdaInternalHandler implements RequestStreamHandler{
 	// Initialize the Log4j logger.
 	static final Logger logger = LogManager.getLogger(FidoUafLambdaInternalHandler.class);
+	protected Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+	private final StorageInterface storage = StorageImpl.getInstance();
+	private final Notary notary = NotaryImpl.getInstance();
+	private final FidoUafResource fidoUafResource;
 
 	//static final String UserTableName = System.getenv("DB_USER_TABLE_NAME");
 	//static final String DefaultUser = System.getenv("DEFAULT_USER_IDENTITY"); // b342ff9c-9924-4421-9071-32763f907d9b
@@ -42,9 +51,9 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
 	JSONParser parser = new JSONParser();
 
 	public FidoUafLambdaInternalHandler(){
-		//logger.debug("Created FIDO UAF Server Lambda Handler");
-		//logger.debug("Default user is " + DefaultUser);
-		//logger.debug("User Table name user is " + UserTableName);
+		logger.debug("Created FIDO UAF Server Lambda Handler");
+		fidoUafResource = new FidoUafResource(storage, notary);
+		logger.debug("Created FidoUafResource object with real implementation of notary and storage");
 	}
 
 
@@ -64,7 +73,7 @@ public class FidoUafLambdaInternalHandler extends FidoUafResource implements Req
             event = (JSONArray)parser.parse(strEvent);
 			logger.info("Successfully parsed the input stream to a JSONObject");
 			logger.info(event.toJSONString());
-			AuthenticatorRecord[] ar_response = processAuthResponse(event.toJSONString());
+			AuthenticatorRecord[] ar_response = fidoUafResource.processAuthResponse(event.toJSONString());
 			//Simplification - only return the first authenticator record
 			String json_body = gson.toJson(ar_response[0]);
 			outputStream.write(json_body.getBytes());

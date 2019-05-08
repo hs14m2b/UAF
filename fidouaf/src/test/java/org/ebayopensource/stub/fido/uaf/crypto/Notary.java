@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package org.ebayopensource.fido.uaf.msg;
+package org.ebayopensource.stub.fido.uaf.crypto;
 
-public class OperationHeader {
-	public Version upv;
-	public Operation op;
-	public String appID;
-	public String serverData;
-	public Extension[] exts;
+public interface Notary {
+	
+	public String sign (String dataToSign);
+	public boolean verify (String dataToSign, String signature);
 }
