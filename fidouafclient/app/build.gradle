@@ -26,6 +26,13 @@ dependencies {
     implementation group: 'commons-codec', name: 'commons-codec', version: '1.10'
     implementation 'com.google.firebase:firebase-messaging:11.8.0'
     implementation "com.android.support:support-compat:25.2.0"
+// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt
+//    implementation group: 'io.jsonwebtoken', name: 'jjwt', version: '0.2'
+    api 'io.jsonwebtoken:jjwt-api:0.10.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.10.5'
+    runtimeOnly('io.jsonwebtoken:jjwt-orgjson:0.10.5') {
+        exclude group: 'org.json', module: 'json' //provided by Android natively
+    }
 }
 
 apply plugin: 'com.google.gms.google-services'
