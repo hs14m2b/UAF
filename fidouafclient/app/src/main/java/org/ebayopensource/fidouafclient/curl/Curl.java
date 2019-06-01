@@ -169,7 +169,12 @@ public class Curl {
 					for (String h : header){
 						try {
 							String[] split = h.split(":");
-							request.addHeader(split[0], split[1]);
+							if (split.length >1) {
+								String headerName = split[0];
+								String headerValue = split[1].replace("&nbsp;", " ");
+								Log.d("CURL: ", "Header name: " + headerName + " and header value: " + headerValue);
+								request.addHeader(headerName, headerValue);
+							}
 						}
 						catch (Exception hex)
 						{
@@ -230,7 +235,12 @@ public class Curl {
 			if (header != null){
 				for (String h : header){
 					String[] split = h.split(":");
-					if (split.length >1) request.addHeader(split[0], split[1].replace("&nbsp;"," "));
+					if (split.length >1) {
+						String headerName = split[0];
+						String headerValue = split[1].replace("&nbsp;", " ");
+						Log.d("CURL: ", "Header name: " + headerName + " and header value: " + headerValue);
+						request.addHeader(headerName, headerValue);
+					}
 				}
 			}
 			request.setEntity(new StringEntity(data));
