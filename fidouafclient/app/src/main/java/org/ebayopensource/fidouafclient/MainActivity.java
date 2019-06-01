@@ -89,6 +89,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "Lifecycle event = onCreate");
         if (Preferences.getSettingsParam("keyID").equals("")) {
             setContentView(R.layout.activity_main);
             findFields();
@@ -126,7 +127,9 @@ public class MainActivity extends Activity {
         Log.i("processUri: ", "State is " + authState);
         msg.setText("State is " + authState);//get the tokens
         //String postData = "grant_type=authorization_code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
-        String postData = "grant_type=authorization_code&code_verifier=11234567890123456789012345678901234567890123&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode;
+        String postData = "grant_type=authorization_code&" +
+                "redirect_uri=mrbapp://android.mr-b.click/authResponse&" +
+                "code=" + authCode;
         String postHeader = "Content-type:application/x-www-form-urlencoded Authorization:Basic&nbsp;bmhzLW9ubGluZTpzZWNyZXQ=";
         String responseTokens = Curl.postInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/token", postHeader, postData);
         Log.i("processUri: ", "Tokens are " + responseTokens);
@@ -174,6 +177,47 @@ public class MainActivity extends Activity {
     public void onStart() {
         super.onStart();
 
+        Log.d(TAG, "Lifecycle event = onStart");
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        Log.d(TAG, "Lifecycle event = onPause");
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        Log.d(TAG, "Lifecycle event = onStop");
+
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+
+        Log.d(TAG, "Lifecycle event = onRestart");
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Log.d(TAG, "Lifecycle event = onResume");
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        Log.d(TAG, "Lifecycle event = onDestroy");
 
     }
 
