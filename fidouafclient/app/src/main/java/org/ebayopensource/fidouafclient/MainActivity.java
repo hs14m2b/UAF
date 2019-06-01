@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
     private Auth auth = new Auth();
     private int authenticatorIndex = 1;
     private OIDCTokens tokens = null;
+    private JwtGenerator jwtGenerator = new JwtGenerator();
 
     //push notification manager
     private notificationTokenManager notifier = new notificationTokenManager();
