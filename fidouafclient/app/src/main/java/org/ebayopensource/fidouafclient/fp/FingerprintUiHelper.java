@@ -146,5 +146,6 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
         void onAuthenticated(FingerprintManager.CryptoObject cryptObj);
 
         void onError();
+
     }
 }

@@ -34,15 +34,18 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 
 import org.ebayopensource.fido.uaf.client.op.Auth;
+import org.ebayopensource.fido.uaf.client.op.Dereg;
 import org.ebayopensource.fido.uaf.client.op.Reg;
 import org.ebayopensource.fido.uaf.crypto.FidoKeystore;
 import org.ebayopensource.fido.uaf.crypto.FidoSigner;
 import org.ebayopensource.fido.uaf.crypto.FidoSignerAndroidM;
 import org.ebayopensource.fido.uaf.crypto.FidoSignerBC;
+import org.ebayopensource.fido.uaf.msg.DeregistrationRequest;
 import org.ebayopensource.fido.uaf.msg.RegistrationRequest;
 import org.ebayopensource.fidouafclient.fp.FingerprintAuthProcessor;
 import org.ebayopensource.fidouafclient.fp.FingerprintAuthenticationDialogFragment;
 import org.ebayopensource.fidouafclient.util.Preferences;
+import org.hamcrest.CoreMatchers;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -65,13 +68,15 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
     private TextView operation;
     private TextView uafMsg;
     private Reg regOp;
+    private Dereg deregOp;
     private Auth authOp = new Auth();
     private KeyguardManager keyguardManager;
     private int REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS = 1;
 
     private static final String DIALOG_FRAGMENT_TAG = "fpDialogFragment";
 
-    private String authReq;
+    private String uafReq;
+    private String uafMsgTxt;
 
     private FidoKeystore fidoKeystore;
 
@@ -92,13 +97,13 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
     }
 
     private void processOpAndFinish() {
-        String inMsg = this.getIntent().getExtras().getString("message");
-        Log.d(TAG, "inMsg " + inMsg);
+        uafReq = this.getIntent().getExtras().getString("message");
+        Log.d(TAG, "uafReq " + uafReq);
 
-        if (inMsg != null && inMsg.length() > 0) {
-            processOp(inMsg);
+        if (uafReq != null && uafReq.length() > 0) {
+            processOp(uafReq);
         } else {
-            Log.w(TAG, "inMsg is empty");
+            Log.w(TAG, "uafReq is empty");
         }
     }
 
@@ -118,45 +123,16 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
 
         try {
             String msg = "";
-            final String inMsg = extract(inUafOperationMsg);
-            if (inMsg.contains("\"Reg\"")) {
-                Log.d(TAG, "op=Reg");
-
-                RegistrationRequest regRequest = gson.fromJson(inMsg, RegistrationRequest[].class)[0];
-                regOp = new Reg(regRequest.username, fidoKeystore);
-                msg = regOp.register(inMsg);
-
-                returnResultAndFinish(msg);
-            } else if (inMsg.contains("\"Auth\"")) {
-                Log.d(TAG, "op=Auth");
-                authReq = inMsg;
-
-                String username = Preferences.getSettingsParam("username");
-                Log.d(TAG, "username: " + username);
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (supportsFingerprintAuth()) {
-                        startFingerprintAuth();
-                    } else {
-                        // assume already authenticated via confirmCredentials()
-                        FidoSigner fidoSigner = createFidoSigner();
-                        // fido signer doesn't need key pair, handled internally
-                        String authMsg = authOp.auth(authReq, fidoSigner, null);
-
-                        returnResultAndFinish(authMsg);
-                    }
-                } else {
-                    FidoSigner fidoSigner = new FidoSignerBC();
-                    KeyPair keyPair = fidoKeystore.getKeyPair(username);
-                    msg = authOp.auth(authReq, fidoSigner, keyPair);
-
-                    returnResultAndFinish(msg);
+            uafMsgTxt = extract(inUafOperationMsg);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && supportsFingerprintAuth()) {
+                if (isAuthOp()) {
+                    Log.d(TAG, "op=Auth");
+                    String username = Preferences.getSettingsParam("username");
+                    Log.d(TAG, "username: " + username);
+                    startFingerprintAuth();
+                } else if (isRegOp() || isDeregOp()) {
+                    startFingerprintReg();
                 }
-            } else if (inMsg.contains("\"Dereg\"")) {
-                Log.d(TAG, "op=Dereg");
-
-                msg = inUafOperationMsg;
-                returnResultAndFinish(msg);
             }
         } catch (GeneralSecurityException | SecurityException | IOException e) {
             String errorMessage = "Error : " + e.getMessage();
@@ -177,13 +153,26 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void startFingerprintAuth() throws GeneralSecurityException, IOException {
         Signature signature = Signature.getInstance("SHA256withECDSA");
-        PrivateKey privateKey = fidoKeystore.getKeyPair(Preferences.getSettingsParam("username")).getPrivate();
+        PrivateKey privateKey = fidoKeystore.getKeyPair(
+                Preferences.getSettingsParam("username")).getPrivate();
         signature.initSign(privateKey);
 
         FingerprintAuthenticationDialogFragment fragment
                 = new FingerprintAuthenticationDialogFragment();
         FingerprintManager.CryptoObject cryptoObj = new FingerprintManager.CryptoObject(signature);
         fragment.setCryptoObject(cryptoObj);
+        fragment.setStage(
+                FingerprintAuthenticationDialogFragment.Stage.FINGERPRINT);
+
+        Log.d(TAG, "Showing fragment: " + fragment);
+        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void startFingerprintReg() throws GeneralSecurityException, IOException {
+
+        FingerprintAuthenticationDialogFragment fragment
+                = new FingerprintAuthenticationDialogFragment();
         fragment.setStage(
                 FingerprintAuthenticationDialogFragment.Stage.FINGERPRINT);
 
@@ -203,11 +192,38 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void processAuthentication(FingerprintManager.CryptoObject cryptObj) {
-        FidoSigner fidoSigner = new FidoSignerAndroidM(cryptObj.getSignature());
-        // fido signer doesn't need key pair, handled internally
-        String msg = authOp.auth(authReq, fidoSigner, null);
+        Log.d(TAG, "Completed fingerprint authentication");
+        // check what function processing
+        if (isAuthOp()) {
+            // processing authentication
+            // fido signer doesn't need key pair, handled internally
+            FidoSigner fidoSigner = new FidoSignerAndroidM(cryptObj.getSignature());
+            String msg = authOp.auth(uafMsgTxt, fidoSigner, null);
+            returnResultAndFinish(msg);
+        }
+        else if (isRegOp()){
+            RegistrationRequest regRequest = gson.fromJson(uafMsgTxt, RegistrationRequest[].class)[0];
+            regOp = new Reg(regRequest.username, fidoKeystore);
+            String msg = regOp.register(uafMsgTxt);
+            returnResultAndFinish(msg);
+        }
+        else if (isDeregOp()) {
+            Log.d(TAG, "op=Dereg");
+            deregOp = new Dereg(Preferences.getSettingsParam("username"), fidoKeystore);
+            String msg = deregOp.dereg(uafMsgTxt);
+            Log.d(TAG, "msg= " + msg);
+            returnResultAndFinish(msg);
+        }
+        else {
+            Log.d(TAG, "Unable to determine what process to invoke following " +
+                    "fingerprint authentication");
+        }
+    }
 
-        returnResultAndFinish(msg);
+    @Override
+    public void onCancel() {
+        Log.d(TAG, "Fingerprint authentication cancelled");
+        finishWithError("Fingerprint authentication cancelled");
     }
 
     private static boolean isAndroidM() {
@@ -231,18 +247,18 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
      }
 
     public void proceed(View view) {
-        if (isAuthOp() && isAndroidM() && supportsFingerprintAuth()) {
+        if (isAndroidM() && supportsFingerprintAuth()) processOpAndFinish();
+        //if ((isAuthOp() || isRegOp()) && isAndroidM() && supportsFingerprintAuth()) {
             // Android M does fingerprint auth internally, so we don't call confirmDeviceCredential()
-            processOpAndFinish();
-        } else {
-            confirmDeviceCredential();
-        }
+        //    processOpAndFinish();
+        //} else {
+        //    confirmDeviceCredential();
+        //}
     }
 
     private boolean isAuthOp() {
         // XXX uglish, needed to avoid double auth in case of Android M+
-        String inMsg = extract(getIntent().getExtras().getString("message"));
-        if (inMsg.contains("\"Auth\"")) {
+        if (uafMsgTxt.contains("\"Auth\"")) {
             Log.d(TAG, "op=Auth");
             return true;
         }
@@ -250,12 +266,34 @@ public class ExampleFidoUafActivity extends Activity implements FingerprintAuthP
         return false;
     }
 
+    private boolean isRegOp() {
+        // XXX uglish, needed to avoid double auth in case of Android M+
+        if (uafMsgTxt.contains("\"Reg\"")) {
+            Log.d(TAG, "op=Reg");
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isDeregOp() {
+        // XXX uglish, needed to avoid double auth in case of Android M+
+        if (uafMsgTxt.contains("\"Dereg\"")) {
+            Log.d(TAG, "op=Dereg");
+            return true;
+        }
+
+        return false;
+    }
+
     private void confirmDeviceCredential() {
-        Intent intent = keyguardManager.createConfirmDeviceCredentialIntent("UAF", "Confirm Identity");
+        Intent intent = keyguardManager.createConfirmDeviceCredentialIntent("UAF",
+                "Confirm Identity");
         if (intent != null) {
             startActivityForResult(intent, REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS);
         } else {
-            finishWithError("Unable to complete local authentication, please setup android device authentication(pin, pattern, fingerprint..)");
+            finishWithError("Unable to complete local authentication, " +
+                    "please setup android device authentication(pin, pattern, fingerprint..)");
         }
     }
 

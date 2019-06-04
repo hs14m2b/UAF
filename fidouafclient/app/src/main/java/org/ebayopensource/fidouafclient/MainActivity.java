@@ -151,6 +151,11 @@ public class MainActivity extends Activity {
             //kick off the registration process
             msg.setText(msg.getText() + "\nStarting Registration Process");
             regRequest();
+        } else if (authState.equals("startDeregistration"))
+        {
+            //kick off the deregistration process
+            msg.setText(msg.getText() + "\nStarting Deregistration Process");
+            dereg();
         }
     }
 
@@ -210,7 +215,7 @@ public class MainActivity extends Activity {
         regRequest();
     }
 
-    public void regRequest(){
+    private void regRequest(){
         String username = ((EditText) findViewById(R.id.editTextName)).getText().toString();
         if (username.equals ("") && tokens == null) {
             msg.setText("Retrieving tokens to initiate FIDO registration.");
@@ -302,7 +307,32 @@ public class MainActivity extends Activity {
     }
 
     public void dereg(View view) {
+        dereg();
+    }
 
+    private void dereg(){
+        if (tokens == null) {
+            msg.setText("Retrieving tokens to initiate FIDO registration.");
+            Log.d(TAG, Preferences.getSettingsParam("oidcServerEndpoint"));
+            String urlString = Preferences.getSettingsParam("oidcServerEndpoint") +
+                    "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&" +
+                    "state=startDeregistration&nonce=mynonce&scope=openid+profile+email+phone&" +
+                    "redirect_uri=mrbapp://android.mr-b.click/authResponse";
+            Log.d(TAG, "URL to launch is: " + urlString);
+            Uri uri = Uri.parse("googlechrome://navigate?url=" + urlString);
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            intent.setPackage("com.android.chrome");
+            try {
+                startActivity(intent);
+            } catch (ActivityNotFoundException ex) {
+                Log.d(TAG, ex.getMessage());
+                // Chrome browser presumably not installed so allow user to choose instead
+                intent.setPackage(null);
+                startActivity(intent);
+            }
+            return;
+        }
         title.setText("Deregistration operation executed");
         String uafMessage = dereg.getUafMsgRequest();
         Intent i = new Intent("org.fidoalliance.intent.FIDO_OPERATION");
@@ -338,13 +368,13 @@ public class MainActivity extends Activity {
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(TAG, String.format("onActivityResult: requestCode=%d, resultCode=%d, data=%s",
-                requestCode, resultCode, new ArrayList<>(data.getExtras().keySet())));
 
         if (data == null){
             msg.setText("UAF Client didn't return any data. resultCode="+resultCode);
             return;
         }
+        Log.d(TAG, String.format("onActivityResult: requestCode=%d, resultCode=%d, data=%s",
+                requestCode, resultCode, new ArrayList<>(data.getExtras().keySet())));
 
         Object[] array = data.getExtras().keySet().toArray();
         StringBuffer extras = new StringBuffer();
