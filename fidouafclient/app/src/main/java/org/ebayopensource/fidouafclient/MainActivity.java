@@ -92,19 +92,9 @@ public class MainActivity extends Activity {
         Log.i("onCreate: ", "Got Intent");
         // check if this intent is started via custom scheme link
         if (ACTION_VIEW.equals(intent.getAction())) {
-            if (requireNonNull(intent.getExtras()).
-                    containsKey(notificationListenerService.AUTHENTICATION_EXTRA))
-            {
-                Log.d(TAG, "Started using push notification");
-                //push notification manager
-                String authenticationSession = intent.getStringExtra(notificationListenerService.AUTHENTICATION_EXTRA);
-                Log.d(TAG, String.format("Authentication Session is %s", authenticationSession));
-            }
-            else {
-                Log.d(TAG, "Started using URI");
-                Uri uri = intent.getData();
-                processUri(requireNonNull(uri));
-            }
+            Log.d(TAG, "Started using URI");
+            Uri uri = intent.getData();
+            processUri(requireNonNull(uri));
         }
     }
 
