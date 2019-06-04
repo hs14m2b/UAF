@@ -3,21 +3,21 @@ package org.ebayopensource.fidouafclient.util;
 public class Endpoints {
 
 	public static final String OIDCSERVER =
-			"https://auth.dev3.signin.nhs.uk";
+			"https://stub.signin.nhs.uk";
 	//		"https://api.mr-b.click/oauth2";
 	public static final String SERVER =
-			"https://dwyo8ihmzg.execute-api.eu-west-2.amazonaws.com/test";
+			"https://uaf.stub.signin.nhs.uk";
 	//"https://api.mr-b.click/fido";
 	//"http://www.head2toes.org";
-	public static final String GET_AUTH_REQUEST = "/fidouaf/v1/authRequest";
-	public static final String POST_AUTH_RESPONSE = "/fidouaf/v1/authResponse";
-	public static final String POST_DEREG_RESPONSE = "/fidouaf/v1/deregRequest";
-	public static final String GET_REG_REQUEST = "/fidouaf/v1/regRequest/";
-	public static final String POST_REG_RESPONSE = "/fidouaf/v1/regResponse";
+	public static final String GET_AUTH_REQUEST = "/authRequest";
+	public static final String POST_AUTH_RESPONSE = "/authResponse";
+	public static final String POST_DEREG_RESPONSE = "/dereg";
+	public static final String GET_REG_REQUEST = "/regRequest";
+	public static final String POST_REG_RESPONSE = "/regResponse";
 	/*public static final String GET_AUTH_REQUEST = "/fidouaf/v1/public/authRequest";
 	public static final String POST_AUTH_RESPONSE = "/fidouaf/v1/public/authResponse";
 	public static final String POST_DEREG_RESPONSE = "/fidouaf/v1/public/deregRequest";
-	public static final String GET_REG_REQUEST = "/fidouaf/v1/public/regRequest/";
+	public static final String GET_REG_REQUEST = "/fidouaf/v1/public/regRequest/";`
 	public static final String POST_REG_RESPONSE = "/fidouaf/v1/public/regResponse";
 */
 

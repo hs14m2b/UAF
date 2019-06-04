@@ -6,4 +6,6 @@ public interface FingerprintAuthProcessor {
 
     void processAuthentication(FingerprintManager.CryptoObject cryptObj);
 
+    void onCancel();
+
 }

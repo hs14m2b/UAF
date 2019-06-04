@@ -22,6 +22,8 @@ public abstract class FidoKeystore {
 
     public abstract KeyPair getKeyPair(String username);
 
+    public abstract void deleteKeyPair(String username);
+
     public abstract PublicKey getPublicKey(String username);
 
     public abstract X509Certificate getCertificate(String username);

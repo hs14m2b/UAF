@@ -129,8 +129,8 @@ public class Dereg {
 		return Curl.postInSeparateThread(Endpoints.getDeregEndpoint(), header , json);
 	}
 	
-	public String post(String json) {
-		String header = "Content-Type:Application/json Accept:Application/json";
+	public String post(String json, String accessToken) {
+		String header = "Content-Type:Application/json Accept:Application/json Authorization:Bearer&nbsp;"+accessToken;
 		return Curl.postInSeparateThread(Endpoints.getDeregEndpoint(), header , json);
 	}
 
@@ -141,13 +141,13 @@ public class Dereg {
 		return json;
 	}
 
-	public String clientSendDeregResponse (String uafMessage) {
+	public String clientSendDeregResponse (String uafMessage, String accessToken) {
 		StringBuffer res = new StringBuffer();
 		String decoded = null;
 		try {
 			JSONObject json = new JSONObject(uafMessage);
 			decoded = json.getString("uafProtocolMessage").replace("\\", "");
-			post(decoded);
+			post(decoded, accessToken);
 			return decoded;
 		} catch (JSONException e) {
 			e.printStackTrace();

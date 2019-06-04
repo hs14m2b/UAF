@@ -26,6 +26,7 @@ import org.ebayopensource.fido.uaf.crypto.SHA;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.tlv.AlgAndEncodingEnum;
 import org.ebayopensource.fido.uaf.tlv.TagsEnum;
+import org.ebayopensource.fido.uaf.tlv.UserVerificationMethods;
 import org.ebayopensource.fidouafclient.util.Preferences;
 
 import java.io.ByteArrayOutputStream;
@@ -85,6 +86,20 @@ public class AuthAssertionBuilder {
 		byteout.write(encodeInt(length));
 		byteout.write(value);
 
+		// specify user verification method extension
+		byteout.write(encodeInt(TagsEnum.TAG_EXTENSION_ID.id));
+		value = "fido.uaf.uvm".getBytes();
+		length = value.length;
+		byteout.write(encodeInt(length));
+		byteout.write(value);
+
+		// include user verification method as extension data
+		byteout.write(encodeInt(TagsEnum.TAG_EXTENSION_DATA.id));
+		value = makeExtensionData();
+		length = value.length;
+		byteout.write(encodeInt(length));
+		byteout.write(value);
+
 		return byteout.toByteArray();
 	}
 
@@ -107,6 +122,14 @@ public class AuthAssertionBuilder {
 			bb.putShort((short)AlgAndEncodingEnum.UAF_ALG_SIGN_SECP256R1_ECDSA_SHA256_RAW.id);
 		}
 
+		return bb.array().clone();
+	}
+
+	private byte[] makeExtensionData() {
+		// user verification method - hard-coded as this is test app
+		ByteBuffer bb = ByteBuffer.allocate(1);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.put((byte)(UserVerificationMethods.USER_VERIFY_PRESENCE.id + UserVerificationMethods.USER_VERIFY_FINGERPRINT.id));
 		return bb.array().clone();
 	}
 

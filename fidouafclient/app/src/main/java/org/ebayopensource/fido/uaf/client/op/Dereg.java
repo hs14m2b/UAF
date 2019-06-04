@@ -18,6 +18,7 @@ package org.ebayopensource.fido.uaf.client.op;
 
 import com.google.gson.Gson;
 
+import org.ebayopensource.fido.uaf.crypto.FidoKeystore;
 import org.ebayopensource.fidouafclient.util.Preferences;
 import org.ebayopensource.fido.uaf.client.RegAssertionBuilder;
 import org.ebayopensource.fido.uaf.msg.DeregisterAuthenticator;
@@ -32,7 +33,14 @@ public class Dereg {
 	
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	private Gson gson = new Gson();
-	
+	private String username;
+	private FidoKeystore fidoKeystore;
+
+	public Dereg(String username, FidoKeystore fidoKeystore) {
+		this.username = username;
+		this.fidoKeystore = fidoKeystore;
+	}
+
 	public String dereg (String uafMsg){
 	logger.info ("  [UAF][1]Dereg  ");
 	try {
@@ -49,18 +57,58 @@ public class Dereg {
 		deregAuth.keyID = tmp;
 //				Base64.encodeToString(bytes, Base64.NO_WRAP);
 		reg.authenticators[0] = deregAuth;
-		
-		logger.info ("  [UAF][2]Dereg - Reg Response Formed  ");
+		logger.info ("  [UAF][2]Dereg - Reg Response Formed  " + gson.toJson(reg));
 		Preferences.setSettingsParam("pub", "");
 		Preferences.setSettingsParam("priv", "");
 		Preferences.setSettingsParam("username", "");
 		Preferences.setSettingsParam("keyId", "");
-		logger.info ("  [UAF][5]Dereg - keys stored  ");
-		return gson.toJson(reg);
+		fidoKeystore.deleteKeyPair(username);
+		logger.info ("  [UAF][5]Dereg - keys deleted  ");
+		return getUafProtocolMsg(gson.toJson(reg));
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
 		return "";
+	}
+
+	public String dereg (){
+		logger.info ("  [UAF][1]Dereg  ");
+		try {
+			DeregistrationRequest reg = new DeregistrationRequest();
+			reg.header = new OperationHeader();
+			reg.header.upv = new Version(1, 0);
+			reg.header.op = Operation.Dereg;
+			reg.header.appID = Preferences.getSettingsParam("appID");
+			reg.authenticators = new DeregisterAuthenticator[1];
+			DeregisterAuthenticator deregAuth = new DeregisterAuthenticator();
+			deregAuth.aaid = RegAssertionBuilder.AAID;
+			String tmp = Preferences.getSettingsParam("keyId");
+			byte[] bytes = tmp.getBytes();
+			deregAuth.keyID = tmp;
+//				Base64.encodeToString(bytes, Base64.NO_WRAP);
+			reg.authenticators[0] = deregAuth;
+			logger.info ("  [UAF][2]Dereg - Reg Response Formed  " + gson.toJson(reg));
+			Preferences.setSettingsParam("pub", "");
+			Preferences.setSettingsParam("priv", "");
+			Preferences.setSettingsParam("username", "");
+			Preferences.setSettingsParam("keyId", "");
+			fidoKeystore.deleteKeyPair(username);
+			logger.info ("  [UAF][5]Dereg - keys deleted  ");
+			return getUafProtocolMsg(gson.toJson(reg));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
+	}
+
+	public String getUafProtocolMsg(String uafMsg) {
+		String msg = "{\"uafProtocolMessage\":";
+		msg = msg + "\"";
+		msg = msg + uafMsg.replace("\"", "\\\"");
+		msg = msg + "\"";
+		msg = msg + "}";
+		return msg;
 	}
 }

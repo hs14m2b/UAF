@@ -46,6 +46,12 @@ public class FidoKeyStoreBC extends FidoKeystore {
     }
 
     @Override
+    public void deleteKeyPair(String username) {
+        Preferences.setSettingsParam("pub", "");
+        Preferences.setSettingsParam("priv", "");
+    }
+
+    @Override
     public PublicKey getPublicKey(String username) {
         try {
             PublicKey pub =

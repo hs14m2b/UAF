@@ -86,7 +86,7 @@
         android:id="@+id/imageButtonDereg"
         android:layout_width="45dp"
         android:layout_height="45dp"
-        android:contentDescription="AuthRequest"
+        android:contentDescription="DeregRequest"
         android:onClick="dereg"
         android:src="@drawable/deregister"
          />

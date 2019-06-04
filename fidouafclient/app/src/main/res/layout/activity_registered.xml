@@ -118,40 +118,4 @@
              />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="80dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:layout_toRightOf="@id/linearLayout"
-        android:id="@+id/linearLayoutTrx">
-
-        <ImageView
-            android:id="@+id/imageButtonTrxRequest"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:contentDescription="AuthRequest"
-            android:onClick="trxRequest"
-            android:src="@drawable/s_authenticate"
-            android:layout_above="@+id/textAuthenticateLable"
-            android:layout_alignLeft="@+id/textAuthenticateLable"
-            android:layout_alignStart="@+id/textAuthenticateLable" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="transaction"
-            android:id="@+id/textTrxLabel"
-            />
-    </LinearLayout>
-
-    <ImageView
-        android:id="@+id/imageSeparator3"
-        android:layout_width="wrap_content"
-        android:layout_height="60dp"
-        android:layout_toRightOf="@+id/linearLayout"
-        android:contentDescription=""
-        android:src="@drawable/separator"
-        />
 </RelativeLayout>
