@@ -99,6 +99,15 @@ public class FidoKeystoreAndroidM extends FidoKeystore {
         }
     }
 
+    public void deleteKeyPair(String username) {
+        try {
+            KeyStore keyStore = getAndroidKeyStore();
+            if (keyStore.containsAlias(username)) keyStore.deleteEntry(username);
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+    }
+
     @NonNull
     private KeyStore getAndroidKeyStore() {
         try {

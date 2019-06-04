@@ -43,4 +43,8 @@
     <string name="use_fingerprint_to_authenticate_key" >use_fingerprint_to_authenticate_key</string>
     <string name="description_bugdroid_icon">Android bugdroid image</string>
     <string name="description_fingerprint_icon">Fingerprint icon</string>
+    <string name="retrieve_token_message">Retrieving tokens to initiate FIDO registration.</string>
+    <string name="retrieve_tokens_dereg_message">Retrieving tokens to initiate FIDO deregistration.</string>
+    <string name="dereg_op_message">Deregistration operation executed</string>
+    <string name="auth_op_message">Authentication operation executed</string>
 </resources>

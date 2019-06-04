@@ -57,18 +57,49 @@ public class Dereg {
 		deregAuth.keyID = tmp;
 //				Base64.encodeToString(bytes, Base64.NO_WRAP);
 		reg.authenticators[0] = deregAuth;
-		
 		logger.info ("  [UAF][2]Dereg - Reg Response Formed  " + gson.toJson(reg));
 		Preferences.setSettingsParam("pub", "");
 		Preferences.setSettingsParam("priv", "");
 		Preferences.setSettingsParam("username", "");
 		Preferences.setSettingsParam("keyId", "");
-		logger.info ("  [UAF][5]Dereg - keys stored  ");
+		fidoKeystore.deleteKeyPair(username);
+		logger.info ("  [UAF][5]Dereg - keys deleted  ");
 		return getUafProtocolMsg(gson.toJson(reg));
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
+		return "";
+	}
+
+	public String dereg (){
+		logger.info ("  [UAF][1]Dereg  ");
+		try {
+			DeregistrationRequest reg = new DeregistrationRequest();
+			reg.header = new OperationHeader();
+			reg.header.upv = new Version(1, 0);
+			reg.header.op = Operation.Dereg;
+			reg.header.appID = Preferences.getSettingsParam("appID");
+			reg.authenticators = new DeregisterAuthenticator[1];
+			DeregisterAuthenticator deregAuth = new DeregisterAuthenticator();
+			deregAuth.aaid = RegAssertionBuilder.AAID;
+			String tmp = Preferences.getSettingsParam("keyId");
+			byte[] bytes = tmp.getBytes();
+			deregAuth.keyID = tmp;
+//				Base64.encodeToString(bytes, Base64.NO_WRAP);
+			reg.authenticators[0] = deregAuth;
+			logger.info ("  [UAF][2]Dereg - Reg Response Formed  " + gson.toJson(reg));
+			Preferences.setSettingsParam("pub", "");
+			Preferences.setSettingsParam("priv", "");
+			Preferences.setSettingsParam("username", "");
+			Preferences.setSettingsParam("keyId", "");
+			fidoKeystore.deleteKeyPair(username);
+			logger.info ("  [UAF][5]Dereg - keys deleted  ");
+			return getUafProtocolMsg(gson.toJson(reg));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return "";
 	}
 

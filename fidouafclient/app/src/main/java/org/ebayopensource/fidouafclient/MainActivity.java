@@ -22,7 +22,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
@@ -42,9 +41,7 @@ import org.ebayopensource.fido.uaf.msg.asm.obj.OIDCTokens;
 import org.ebayopensource.fidouafclient.curl.Curl;
 import org.ebayopensource.fidouafclient.op.Auth;
 import org.ebayopensource.fidouafclient.op.Dereg;
-import org.ebayopensource.fidouafclient.op.OpUtils;
 import org.ebayopensource.fidouafclient.op.Reg;
-import org.ebayopensource.fidouafclient.util.Endpoints;
 import org.ebayopensource.fidouafclient.util.Preferences;
 import org.ebayopensource.fidouafclient.util.JwtGenerator;
 import org.json.JSONObject;
@@ -54,11 +51,11 @@ import java.security.MessageDigest;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.logging.Logger;
+import java.util.Locale;
 
 import static android.R.id.message;
+import static android.content.Intent.ACTION_VIEW;
+import static java.util.Objects.*;
 
 public class MainActivity extends Activity {
 
@@ -69,13 +66,10 @@ public class MainActivity extends Activity {
     // XXX unify loggers
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final Logger logger = Logger.getLogger(MainActivity.class.getName());
-
     private Gson gson = new Gson();
     private TextView msg;
     private TextView title;
     private TextView username;
-    private TextView facetID;
 
     private Reg reg = new Reg();
     private Dereg dereg = new Dereg();
@@ -83,10 +77,6 @@ public class MainActivity extends Activity {
     private OIDCTokens tokens = null;
     private JwtGenerator jwtGenerator = new JwtGenerator();
 
-    //push notification manager
-    private notificationTokenManager notifier = new notificationTokenManager();
-    private boolean processingNotification=false;
-    private String authenticationSession ="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,34 +91,35 @@ public class MainActivity extends Activity {
         Intent intent = getIntent();
         Log.i("onCreate: ", "Got Intent");
         // check if this intent is started via custom scheme link
-        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-            if (Objects.requireNonNull(intent.getExtras()).containsKey(notificationListenerService.AUTHENTICATION_EXTRA))
+        if (ACTION_VIEW.equals(intent.getAction())) {
+            if (requireNonNull(intent.getExtras()).
+                    containsKey(notificationListenerService.AUTHENTICATION_EXTRA))
             {
                 Log.d(TAG, "Started using push notification");
-                authenticationSession = intent.getStringExtra(notificationListenerService.AUTHENTICATION_EXTRA);
-                Log.d(TAG, "Authentication Session is " + authenticationSession);
-                processNotification(authenticationSession);
+                //push notification manager
+                String authenticationSession = intent.getStringExtra(notificationListenerService.AUTHENTICATION_EXTRA);
+                Log.d(TAG, String.format("Authentication Session is %s", authenticationSession));
             }
             else {
                 Log.d(TAG, "Started using URI");
                 Uri uri = intent.getData();
-                processUri(uri);
+                processUri(requireNonNull(uri));
             }
         }
     }
 
     private void processUri(Uri uri)
     {
-        Log.d("processUri: ", "Launch URL is " + uri.toString());
+        Log.d("processUri: ", String.format("Launch URL is %s", uri.toString()));
         String authCode = uri.getQueryParameter("code"); // "str" is set
         String authState = uri.getQueryParameter("state"); // "string" is set
-        Log.d("processUri: ", "Authorization code is " + authCode);
-        Log.d("processUri: ", "State is " + authState);
-        msg.setText("State is " + authState);
+        Log.d("processUri: ", String.format("Authorization code is %s", authCode));
+        Log.d("processUri: ", String.format("State is %s", authState));
+        msg.setText(String.format("State is %s", authState));
         //get the tokens
         Log.d("processUri", "Generating jwt");
         String jwtString = jwtGenerator.generateJwt("832a7164-93f7-4f23-9c77-4a2205227fab",
-                Preferences.getSettingsParam("oidcServerEndpoint") + "/token");
+                String.format("%s/token", Preferences.getSettingsParam("oidcServerEndpoint")));
         Log.d("processUri", jwtString);
         String postData = "grant_type=authorization_code&" +
                 "redirect_uri=mrbapp://android.mr-b.click/authResponse&" +
@@ -144,50 +135,21 @@ public class MainActivity extends Activity {
         tokens = gson.fromJson(responseTokens, OIDCTokens.class);
         Log.d("processUri: ", "Cast responseTokens into object ");
         Log.d("processUri: ", "Access Token is " + tokens.access_token);
-        msg.setText(msg.getText() + "\nIdentity Token is " + tokens.id_token);
-        msg.setText(msg.getText() + "\nAccess Token is " + tokens.access_token);
-        if (authState.equals("startRegistration"))
+        msg.setText(String.format("%s\nIdentity Token is %s", msg.getText(), tokens.id_token));
+        msg.setText(String.format("%s\nAccess Token is %s", msg.getText(), tokens.access_token));
+        if ("startRegistration".equals(authState))
         {
             //kick off the registration process
-            msg.setText(msg.getText() + "\nStarting Registration Process");
+            msg.setText(String.format("%s\nStarting Registration Process", msg.getText()));
             regRequest();
-        } else if (authState.equals("startDeregistration"))
+        } else if ("startDeregistration".equals(authState))
         {
             //kick off the deregistration process
-            msg.setText(msg.getText() + "\nStarting Deregistration Process");
+            msg.setText(String.format("%s\nStarting Deregistration Process", msg.getText()));
             dereg();
         }
     }
 
-    private void getTokens(String uri)
-    {
-        Log.d("processUri: ", "Launch URL is " + uri);
-        String authCode = uri.substring(uri.indexOf("code=")+5); // "str" is set
-        authCode = authCode.substring(0, authCode.length()-3);
-        //String authState = uri.getQueryParameter("state"); // "string" is set
-        Log.d("processUri: ", "Authorization code is " + authCode);
-        Log.d("processUri", "Generating jwt");
-        String jwtString = jwtGenerator.generateJwt("832a7164-93f7-4f23-9c77-4a2205227fab",
-                Preferences.getSettingsParam("oidcServerEndpoint") + "/token");
-        Log.d("processUri", jwtString);
-        String postData = "grant_type=authorization_code&redirect_uri=mrbapp://android.mr-b.click/authResponse&code=" + authCode + "&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion="+jwtString;
-        String postHeader = "Content-type:application/x-www-form-urlencoded";
-        String responseTokens = Curl.postInSeparateThread(Preferences.getSettingsParam("oidcServerEndpoint") + "/token", postHeader, postData);
-        Log.d("processUri: ", "Tokens are " + responseTokens);
-        tokens = gson.fromJson(responseTokens, OIDCTokens.class);
-        Log.d("processUri: ", "Cast responseTokens into object ");
-        Log.d("processUri: ", "Access Token is " + tokens.access_token);
-        Log.d("processUri: ", "ID Token is " + tokens.id_token);
-        msg.setText(msg.getText() + "\nIdentity Token is " + tokens.id_token);
-        msg.setText(msg.getText() + "\nAccess Token is " + tokens.access_token);
-    }
-
-
-    private void processNotification(String authenticationSession)
-    {
-        processingNotification = true;
-        authRequest(null);
-    }
     @Override
     public void onStart() {
         super.onStart();
@@ -200,14 +162,15 @@ public class MainActivity extends Activity {
     }
 	
     public void facetIDRequest(View view) {
-        String facetIDval = "";
+        String facetIDval;
         try {
             facetIDval = getFacetID(this.getPackageManager().getPackageInfo(this.getPackageName(), this.getPackageManager().GET_SIGNATURES));
             Log.d("facetID: ", facetIDval);
         } catch (NameNotFoundException e) {
+            facetIDval="";
             e.printStackTrace();
         }
-        facetID = (TextView) findViewById(R.id.textViewFacetID);
+        TextView facetID = (TextView) findViewById(R.id.textViewFacetID);
         facetID.setText(facetIDval);
     }
 
@@ -218,17 +181,16 @@ public class MainActivity extends Activity {
     private void regRequest(){
         String username = ((EditText) findViewById(R.id.editTextName)).getText().toString();
         if (username.equals ("") && tokens == null) {
-            msg.setText("Retrieving tokens to initiate FIDO registration.");
+            msg.setText(R.string.retrieve_token_message);
             Log.d(TAG, Preferences.getSettingsParam("oidcServerEndpoint"));
             String urlString = Preferences.getSettingsParam("oidcServerEndpoint") +
                     "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&" +
                     "state=startRegistration&nonce=mynonce&scope=openid+profile+email+phone&" +
                     "redirect_uri=mrbapp://android.mr-b.click/authResponse";
-            Log.d(TAG, "URL to launch is: " + urlString);
+            Log.d(TAG, String.format("URL to launch is: %s", urlString));
             Uri uri = Uri.parse("googlechrome://navigate?url=" + urlString);
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            Intent intent = new Intent(ACTION_VIEW, uri);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//            intent.setPackage("com.android.chrome");
             try {
                 startActivity(intent);
             } catch (ActivityNotFoundException ex) {
@@ -240,15 +202,14 @@ public class MainActivity extends Activity {
             return;
         }
         Preferences.setSettingsParam("username", username);
-        title.setText("Registration operation executed, Username = " + username);
+        title.setText(String.format("Registration operation executed, Username = %s", username));
         Intent i = new Intent("org.fidoalliance.intent.FIDO_OPERATION");
         i.addCategory("android.intent.category.DEFAULT");
         i.setType("application/fido.uaf_client+json");
-        //List<ResolveInfo> queryIntentActivities = this.getPackageManager().queryIntentActivities(i, PackageManager.MATCH_DEFAULT_ONLY);
         String facetID = "";
         try {
             facetID = getFacetID(this.getPackageManager().getPackageInfo(this.getPackageName(), this.getPackageManager().GET_SIGNATURES));
-            title.setText("facetID=" + facetID);
+            title.setText(String.format("facetID=%s", facetID));
         } catch (NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -256,7 +217,7 @@ public class MainActivity extends Activity {
         if (tokens != null)
         {
             regRequest = reg.getUafMsgRegRequest(tokens, facetID, this);
-            Log.d(TAG, "Got UAF Message from server response " + regRequest);
+            Log.d(TAG, String.format("Got UAF Message from server response %s", regRequest));
             try {
                 JSONObject json = new JSONObject(regRequest);
                 String serverResponseArray = json.get("uafProtocolMessage").toString();
@@ -276,8 +237,8 @@ public class MainActivity extends Activity {
             regRequest = reg.getUafMsgRegRequest(username, facetID, this);
         }
         //parse reg request and set username
-        Log.d(TAG, "UAF reg request: " + regRequest);
-        title.setText("{regRequest}" + regRequest);
+        Log.d(TAG, String.format("UAF reg request: %s", regRequest));
+        title.setText(String.format("{regRequest}%s", regRequest));
 
         Bundle data = new Bundle();
         data.putString("message", regRequest);
@@ -296,8 +257,8 @@ public class MainActivity extends Activity {
             Certificate certificate = CertificateFactory.getInstance("X509").
                     generateCertificate(byteArrayInputStream);
             MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
-            String facetID = "android:apk-key-hash:" + Base64.encodeToString(
-                    ((MessageDigest) messageDigest).digest(certificate.getEncoded()), 3);
+            String facetID = String.format("android:apk-key-hash:%s", Base64.encodeToString(
+                    messageDigest.digest(certificate.getEncoded()), 3));
             Log.d(TAG, facetID);
             return facetID;
         } catch (Exception e) {
@@ -312,7 +273,7 @@ public class MainActivity extends Activity {
 
     private void dereg(){
         if (tokens == null) {
-            msg.setText("Retrieving tokens to initiate FIDO registration.");
+            msg.setText(R.string.retrieve_tokens_dereg_message);
             Log.d(TAG, Preferences.getSettingsParam("oidcServerEndpoint"));
             String urlString = Preferences.getSettingsParam("oidcServerEndpoint") +
                     "/authorize?response_type=code&client_id=832a7164-93f7-4f23-9c77-4a2205227fab&" +
@@ -320,7 +281,7 @@ public class MainActivity extends Activity {
                     "redirect_uri=mrbapp://android.mr-b.click/authResponse";
             Log.d(TAG, "URL to launch is: " + urlString);
             Uri uri = Uri.parse("googlechrome://navigate?url=" + urlString);
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            Intent intent = new Intent(ACTION_VIEW, uri);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 //            intent.setPackage("com.android.chrome");
             try {
@@ -333,7 +294,7 @@ public class MainActivity extends Activity {
             }
             return;
         }
-        title.setText("Deregistration operation executed");
+        title.setText(R.string.dereg_op_message);
         String uafMessage = dereg.getUafMsgRequest();
         Intent i = new Intent("org.fidoalliance.intent.FIDO_OPERATION");
         i.addCategory("android.intent.category.DEFAULT");
@@ -347,11 +308,12 @@ public class MainActivity extends Activity {
     }
 
     public void authRequest(View view) {
-        title.setText("Authentication operation executed");
+        title.setText(R.string.auth_op_message);
         String facetID = "";
         try {
+            this.getPackageManager();
             facetID = getFacetID(this.getPackageManager().getPackageInfo(this.getPackageName(),
-                    this.getPackageManager().GET_SIGNATURES));
+                    PackageManager.GET_SIGNATURES));
         } catch (NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -370,25 +332,25 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (data == null){
-            msg.setText("UAF Client didn't return any data. resultCode="+resultCode);
+            msg.setText(String.format(Locale.ENGLISH ,"UAF Client didn't return any data. resultCode=%d",resultCode));
             return;
         }
         Log.d(TAG, String.format("onActivityResult: requestCode=%d, resultCode=%d, data=%s",
-                requestCode, resultCode, new ArrayList<>(data.getExtras().keySet())));
+                requestCode, resultCode, new ArrayList<>(requireNonNull(data.getExtras()).keySet())));
 
         Object[] array = data.getExtras().keySet().toArray();
-        StringBuffer extras = new StringBuffer();
-        extras.append("[resultCode="+resultCode+"]");
-        for (int i = 0; i < array.length; i++) {
-            extras.append("[" + array[i] + "=");
-            extras.append(""+data.getExtras().get((String) array[i]) + "]");
+        StringBuilder extras = new StringBuilder();
+        extras.append(String.format(Locale.ENGLISH ,"[resultCode=%d]",resultCode));
+        for (Object o : array) {
+            extras.append(String.format("[%s=%s]",
+                    o, data.getExtras().get((String) o)));
         }
-        title.setText("extras=" + extras.toString());
+        title.setText(String.format("extras=%s", extras.toString()));
 
         if (requestCode == 2) {
             if (resultCode == RESULT_OK) {
                 String asmResponse = data.getStringExtra("message");
-                Log.d(TAG, "UAF message: " + asmResponse);
+                Log.d(TAG, String.format("UAF message: %s", asmResponse));
                 msg.setText(asmResponse);
                 dereg.recordKeyId(asmResponse);
                 //Prepare ReqResponse
@@ -401,17 +363,17 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK) {
                 try {
                     String uafMessage = data.getStringExtra("message");
-                    Log.d(TAG, "UAF message: " + message);
+                    Log.d(TAG, String.format("UAF message: %s", message));
                     msg.setText(uafMessage);
                     String res = reg.clientSendRegResponse(uafMessage);
-                    Log.d(TAG, "UAF message response: " + res);
+                    Log.d(TAG, String.format("UAF message response: %s", res));
                     setContentView(R.layout.activity_registered);
                     findFields();
-                    title.setText("extras=" + extras.toString());
+                    title.setText(String.format("extras=%s", extras.toString()));
                     msg.setText(res);
                     username.setText(Preferences.getSettingsParam("username"));
                 } catch (Exception e){
-                    msg.setText("Registration operation failed.\n"+e);
+                    msg.setText(String.format("Registration operation failed.\n%s",e.getMessage()));
                 }
             }
             if (resultCode == RESULT_CANCELED) {
@@ -423,7 +385,7 @@ public class MainActivity extends Activity {
                 Preferences.setSettingsParam("username", "");
                 setContentView(R.layout.activity_main);
                 findFields();
-                title.setText("extras=" + extras.toString());
+                title.setText(String.format("extras=%s", extras.toString()));
                 String message = data.getStringExtra("message");
                 Log.d(TAG, String.format("UAF message: [%s]", message));
                 if (message != null) {
@@ -455,7 +417,7 @@ public class MainActivity extends Activity {
                         JSONObject json = new JSONObject(uafMessage);
                         String AuthResponse = json.get("uafProtocolMessage").toString();
                         Log.d(TAG, "AuthResponse message is: " + AuthResponse);
-                        msg.setText("\nAuthResponse is\n" + AuthResponse);
+                        msg.setText(String.format("\nAuthResponse is\n%s", AuthResponse));
                         String AuthResponseB64 = Base64.encodeToString(AuthResponse.getBytes(), Base64.NO_WRAP);
                         Log.d(TAG, "Base64 encoded AuthResponse message is: " + AuthResponseB64);
                         String redirect_uri = "mrbapp://android.mr-b.click/authResponse";
@@ -468,7 +430,7 @@ public class MainActivity extends Activity {
                                 "fido_auth_response=" + AuthResponseB64;
                         Log.d(TAG, "URL to launch is: " + urlString);
                         //section to launch OIDC via device browser
-                        Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(urlString));
+                        Intent intent=new Intent(ACTION_VIEW,Uri.parse(urlString));
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         intent.setPackage("com.android.chrome");
                         try {
@@ -488,8 +450,8 @@ public class MainActivity extends Activity {
                     } catch (Exception ex) {
                         //OLD Code - invoke FIDO Server directly to validate auth response
                         String res = auth.clientSendResponse(uafMessage);
-                        msg.setText("\n" + res);
-                        Log.d(TAG, "UAF message response: " + res);
+                        msg.setText(String.format("\n%s", res));
+                        Log.d(TAG, String.format("UAF message response: %s", res));
                     }
                 }
             }
